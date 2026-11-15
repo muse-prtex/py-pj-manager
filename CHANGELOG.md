@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.0 — 2026-11-16
+
+- Added an automation CLI (`src/pj_manager/cli.py`): list / create / register /
+  unregister / status / commit / push / pull / log / config, with a `--json`
+  contract (single JSON object, exit 0/1, no prompts) designed for scripts
+  and AI agents. See AGENTS.md.
+- `PJ_MANAGER_DATA_DIR` environment variable can redirect the data files
+  (projects.json / config.json), e.g. to a sandbox for testing.
+- Fixed: saving the registry/config failed when the data folder did not
+  exist yet (found by exercising the new CLI against a fresh sandbox).
+- Added AGENTS.md (how agents should drive this tool) and CLI tests
+  (10 tests total, all passing).
+
 ## 0.2.0 — 2026-11-16
 
 - Restructured into a `src/` package layout (`src/pj_manager/`) so the

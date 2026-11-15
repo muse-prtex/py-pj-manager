@@ -16,6 +16,7 @@ pj_manager/core.py — 総合PJ管理システムのコアロジック（GUIな�
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -23,8 +24,12 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-# src/pj_manager/core.py から見て2つ上がリポジトリのルート
-DATA_DIR = Path(__file__).resolve().parents[2]
+# データ置き場: 環境変数 PJ_MANAGER_DATA_DIR があればそこ、
+# なければ src/pj_manager/core.py から見て2つ上（リポジトリのルート）。
+# エージェントやテストがサンドボックスへ差し替えられるようにするための口。
+_env_data = os.environ.get("PJ_MANAGER_DATA_DIR")
+DATA_DIR = (Path(_env_data).expanduser() if _env_data
+            else Path(__file__).resolve().parents[2])
 REGISTRY_FILE = DATA_DIR / "projects.json"
 CONFIG_FILE = DATA_DIR / "config.json"
 
@@ -103,6 +108,7 @@ def load_config() -> dict:
 
 
 def save_config(cfg: dict) -> None:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
     CONFIG_FILE.write_text(json.dumps(cfg, ensure_ascii=False, indent=2),
                            encoding="utf-8")
 
@@ -120,6 +126,7 @@ def load_registry() -> list[dict]:
 
 
 def save_registry(entries: list[dict]) -> None:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
     REGISTRY_FILE.write_text(json.dumps(entries, ensure_ascii=False, indent=2),
                              encoding="utf-8")
 

@@ -39,6 +39,7 @@ git config --global user.email "あなたのメール"
 
 - `src/pj_manager/app.py` … 画面（GUI）本体
 - `src/pj_manager/core.py` … 一覧管理・作成・git/GitHub操作のロジック
+- `src/pj_manager/cli.py` … スクリプト／AIエージェント用 CLI（AGENTS.md 参照）
 - `src/pj_manager/__main__.py` … `python -m pj_manager` 用
 - `tests/` … core の unittest
 - `pjman.py` … 互換用ランチャー（従来どおり `py pjman.py` でも起動できます）
@@ -47,6 +48,22 @@ git config --global user.email "あなたのメール"
 - `config.json` … 設定（同上）
 
 登録を外してもフォルダ自体は消えません（安全のため、この道具からはフォルダの削除はしません）。
+
+## スクリプト／AIエージェント用 CLI
+
+GUI の操作はすべてコマンドラインからも実行できます：
+
+```
+py -m pj_manager.cli list --json
+py -m pj_manager.cli create my-app --json
+py -m pj_manager.cli status my-app --json
+py -m pj_manager.cli commit my-app -m "wip" --json
+```
+
+`--json` を付けると標準出力が JSON 1オブジェクトになり、終了コードは
+0（成功）/1（失敗）。対話プロンプトはありません。エージェント向けの
+契約（サンドボックス用環境変数 `PJ_MANAGER_DATA_DIR` など）は
+[AGENTS.md](AGENTS.md) にあります。
 
 ## コントリビュート
 

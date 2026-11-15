@@ -62,6 +62,7 @@ src/pj_manager/
     __init__.py    package version
     app.py         the GUI (tkinter)
     core.py        project registry, creation, git/GitHub logic (GUI-free)
+    cli.py         command-line face for scripts and AI agents (AGENTS.md)
     __main__.py    enables `python -m pj_manager`
 tests/             unittest suite for core.py (standard library only)
 pjman.py           compatibility launcher (`py pjman.py` still works)
@@ -70,6 +71,21 @@ run.bat            launcher (sets PYTHONPATH and runs the package)
 
 `projects.json` (project registry) and `config.json` (settings) are
 auto-generated in the repository root and git-ignored.
+
+## CLI for scripts and AI agents
+
+Everything the GUI does is also available headlessly:
+
+```powershell
+py -m pj_manager.cli list --json
+py -m pj_manager.cli create my-app --json
+py -m pj_manager.cli status my-app --json
+py -m pj_manager.cli commit my-app -m "wip" --json
+```
+
+With `--json`, stdout is a single JSON object and the exit code is 0/1 —
+no prompts, ever. Agents: read [AGENTS.md](AGENTS.md) for the full contract,
+including the `PJ_MANAGER_DATA_DIR` sandbox variable.
 
 ## Contributing
 
