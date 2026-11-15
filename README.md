@@ -88,6 +88,7 @@ py -m pj_manager.cli list --json
 py -m pj_manager.cli create my-app --json
 py -m pj_manager.cli status my-app --json
 py -m pj_manager.cli commit my-app -m "wip" --json
+py -m pj_manager.cli doctor --json
 ```
 
 With `--json`, stdout is a single JSON object and the exit code is 0/1 —

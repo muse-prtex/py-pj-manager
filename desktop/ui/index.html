@@ -66,6 +66,8 @@
   .btn.danger{color:var(--danger)}
   .root-line{font-size:11px; color:var(--side-sub); margin-top:10px; word-break:break-all}
   .ver{font-size:11px; color:var(--side-sub); margin-top:4px}
+  .ver.warn{color:#f5c66b}
+  .ver.fail{color:#ff9d94}
   /* ---------- メイン ---------- */
   main{flex:1; overflow-y:auto; padding:16px 18px; display:flex; flex-direction:column; gap:12px}
   .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px 18px}
@@ -120,6 +122,7 @@
     <button class="btn side" id="btn-root">作成先フォルダの設定</button>
   </div>
   <div class="root-line" id="root-line"></div>
+  <div class="ver" id="doctor-line">環境チェック中…</div>
   <div class="ver" id="ver"></div>
 </aside>
 
@@ -218,6 +221,22 @@ const DEMO = {
   ]
 };
 
+const DEMO_DOCTOR = {
+  ok: true, status: "warn",
+  summary: {ok: 7, warn: 1, fail: 0},
+  checks: [
+    {name: "python", level: "ok", detail: "Python 3.12.3"},
+    {name: "venv", level: "ok", detail: "venv モジュールが使えます"},
+    {name: "git", level: "ok", detail: "git version 2.43.0"},
+    {name: "gh", level: "warn", detail: "gh CLI はありますがログインしていません",
+     hint: "ターミナルで `gh auth login` を実行してください"},
+    {name: "projects_root", level: "ok", detail: "存在します: C:\\Users\\you\\Projects"},
+    {name: "data_dir", level: "ok", detail: "書き込めます: C:\\Users\\you\\pj-manager-data"},
+    {name: "registry", level: "ok", detail: "3 件登録中（フォルダは全て存在します）"},
+    {name: "config", level: "ok", detail: "config.json が読めます"},
+  ]
+};
+
 let projects = [];
 let selected = null;
 
@@ -236,6 +255,7 @@ async function pj(args){
       return {ok:true, project:p};
     }
     if(args[0] === "config") return {ok:true, config:{projects_root:"C:\\Users\\you\\Projects"}};
+    if(args[0] === "doctor") return structuredClone(DEMO_DOCTOR);
     return {ok:true, output:"（デモモードでは実際には実行されません）"};
   }
   return await invoke("pj", {args});
@@ -408,6 +428,24 @@ document.getElementById("btn-root").onclick = async () => {
   document.getElementById("ver").textContent = isTauri ? "Desktop (Tauri)" : "Desktop (Tauri) — デモモード";
   const cfg = await pj(["config", "show"]);
   if(cfg.ok) document.getElementById("root-line").textContent = "作成先: " + cfg.config.projects_root;
+  /* 起動時チェック: doctor の結果をサイドバーに表示し、問題があればログへ */
+  try{
+    const d = await pj(["doctor"]);
+    const el = document.getElementById("doctor-line");
+    if(d.ok !== undefined){
+      const s = d.summary || {ok:0, warn:0, fail:0};
+      el.textContent = `環境チェック: ${d.status}（${s.ok} ok / ${s.warn} warn / ${s.fail} fail）`;
+      el.classList.toggle("warn", d.status === "warn");
+      el.classList.toggle("fail", d.status === "fail");
+      for(const c of (d.checks || [])){
+        if(c.level !== "ok") log(`環境チェック ${c.level}: ${c.name} — ${c.detail}${c.hint ? "（" + c.hint + "）" : ""}`);
+      }
+    } else {
+      el.textContent = "環境チェック: 取得できませんでした";
+    }
+  }catch(e){
+    document.getElementById("doctor-line").textContent = "環境チェック: 取得できませんでした";
+  }
   await refresh(null);
   log(isTauri ? "準備完了" : "ブラウザでのデザインプレビュー（デモデータ表示中）");
 })();

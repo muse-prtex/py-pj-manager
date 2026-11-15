@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.6.0 — 2026-11-16
+
+- CLI: added the `doctor` command — checks Python / venv / git / gh /
+  projects_root / data dir / registry / config and returns the health
+  as `--json` (`ok` / `status` / `checks` / `summary`; exit 1 only on
+  `fail`, warnings keep exit 0). Missing project folders and a corrupt
+  registry are reported instead of crashing other commands.
+- Desktop UI: runs `doctor` at startup and shows the result in the
+  sidebar (`環境チェック: warn (7 ok / 1 warn / 0 fail)`); non-ok
+  checks are also written to the log panel. No Rust change needed —
+  the shell already forwards any CLI command as JSON.
+
 ## 0.5.0 — 2026-11-16
 
 - Added a modern desktop UI in `desktop/` (Tauri: Rust shell + web

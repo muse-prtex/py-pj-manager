@@ -65,6 +65,7 @@ py -m pj_manager.cli list --json
 py -m pj_manager.cli create my-app --json
 py -m pj_manager.cli status my-app --json
 py -m pj_manager.cli commit my-app -m "wip" --json
+py -m pj_manager.cli doctor --json
 ```
 
 `--json` を付けると標準出力が JSON 1オブジェクトになり、終了コードは

@@ -15,7 +15,8 @@ Examples:
   python -m pj_manager.cli list --json
   python -m pj_manager.cli create my-app --json
   python -m pj_manager.cli status my-app --json
-  python -m pj_manager.cli commit my-app -m "wip" --json
+  python -m pj_manager.cli init my-app --json
+  python -m pj_manager.cli doctor --json
 """
 
 from __future__ import annotations
@@ -161,6 +162,24 @@ def cmd_init(args) -> int:
     return _out({"ok": True, "output": out}, args.json, out)
 
 
+def cmd_doctor(args) -> int:
+    result = core.doctor()
+    marks = {"ok": "✓", "warn": "!", "fail": "✗"}
+    lines = []
+    for c in result["checks"]:
+        line = f"{marks[c['level']]} {c['name']}: {c['detail']}"
+        if c.get("hint"):
+            line += f" — {c['hint']}"
+        lines.append(line)
+    s = result["summary"]
+    lines.append(f"status: {result['status']} "
+                 f"({s['ok']} ok / {s['warn']} warn / {s['fail']} fail)")
+    _out({"ok": result["ok"], "status": result["status"],
+          "checks": result["checks"], "summary": s},
+         args.json, "\n".join(lines))
+    return 0 if result["ok"] else 1
+
+
 def cmd_config(args) -> int:
     cfg = core.load_config()
     if args.action == "show":
@@ -219,6 +238,9 @@ def build_parser() -> argparse.ArgumentParser:
     cf = sub.add_parser("config", help="show or change settings")
     cf.add_argument("action", choices=["show", "set-root"])
     cf.add_argument("value", nargs="?", help="folder path for set-root")
+
+    sub.add_parser("doctor", help="check environment health "
+                   "(python / git / gh / paths / registry)")
     return p
 
 
@@ -234,6 +256,7 @@ HANDLERS = {
     "log": cmd_log,
     "init": cmd_init,
     "config": cmd_config,
+    "doctor": cmd_doctor,
 }
 
 

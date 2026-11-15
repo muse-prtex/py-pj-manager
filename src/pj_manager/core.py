@@ -250,6 +250,131 @@ def github_web_url(path: str | Path) -> str:
     return ""
 
 
+# ---------- 健全性チェック（doctor） ----------
+def doctor() -> dict:
+    """環境の健全性を点検する（doctor コマンドの中身）。
+
+    checks は [{name, level, detail, hint?}] のリスト。
+    level は "ok" / "warn" / "fail"。全体の status は fail が
+    1つでもあれば "fail"、なければ warn があれば "warn"、それ以外 "ok"。
+    ok は fail が無いこと（warn だけなら終了コード 0）。
+    デスクトップUIやエージェントの起動時チェック用。
+    """
+    checks: list[dict] = []
+
+    def add(name: str, level: str, detail: str, hint: str = "") -> None:
+        c: dict = {"name": name, "level": level, "detail": detail}
+        if hint:
+            c["hint"] = hint
+        checks.append(c)
+
+    # Python
+    ver = sys.version_info
+    if ver < (3, 10):
+        add("python", "fail",
+            f"Python {sys.version.split()[0]}（3.10 以上が必要です）")
+    else:
+        add("python", "ok", f"Python {sys.version.split()[0]}")
+
+    # venv モジュール
+    try:
+        import venv  # noqa: F401
+        add("venv", "ok", "venv モジュールが使えます")
+    except ImportError:
+        add("venv", "fail", "venv モジュールがありません")
+
+    # git
+    git = shutil.which("git")
+    if git:
+        ok, out = run_cmd(["git", "--version"])
+        add("git", "ok", out.splitlines()[0] if ok and out else f"git ({git})")
+    else:
+        add("git", "warn", "git が見つかりません",
+            "git を入れると git init / コミットなどの機能が使えます")
+
+    # gh
+    ok, _msg = gh_available()
+    if ok:
+        add("gh", "ok", "gh CLI にログイン済みです")
+    elif shutil.which("gh"):
+        add("gh", "warn", "gh CLI はありますがログインしていません",
+            "ターミナルで `gh auth login` を実行してください")
+    else:
+        add("gh", "warn", "gh CLI が入っていません",
+            "GitHub 機能を使う場合は https://cli.github.com/ からインストール")
+
+    # projects_root
+    cfg = load_config()
+    root = Path(cfg.get("projects_root", "")).expanduser()
+    if root.is_dir():
+        add("projects_root", "ok", f"存在します: {root}")
+    elif root.parent.is_dir() and os.access(root.parent, os.W_OK):
+        add("projects_root", "ok",
+            f"まだありません（初回作成時に作られます）: {root}")
+    else:
+        add("projects_root", "fail", f"作れません: {root}",
+            "config set-root で書き込めるフォルダを指定してください")
+
+    # data dir（書き込み可否を実際に試す）
+    try:
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        probe = DATA_DIR / ".doctor-probe"
+        probe.write_text("ok", encoding="utf-8")
+        probe.unlink()
+        add("data_dir", "ok", f"書き込めます: {DATA_DIR}")
+    except OSError as e:
+        add("data_dir", "fail", f"書き込めません: {DATA_DIR} ({e})")
+
+    # registry（壊れ・フォルダ無しの登録を検出）
+    if REGISTRY_FILE.exists():
+        try:
+            data = json.loads(REGISTRY_FILE.read_text(encoding="utf-8"))
+            if not isinstance(data, list):
+                add("registry", "fail",
+                    "projects.json の中身が一覧（配列）ではありません")
+            else:
+                missing = [e.get("name", "?") for e in data
+                           if isinstance(e, dict)
+                           and not Path(e.get("path", "")).is_dir()]
+                if missing:
+                    add("registry", "warn",
+                        f"{len(data)} 件登録中・うちフォルダが無いもの: "
+                        f"{', '.join(missing)}",
+                        "存在しないフォルダの登録は unregister で外せます")
+                elif data:
+                    add("registry", "ok",
+                        f"{len(data)} 件登録中（フォルダは全て存在します）")
+                else:
+                    add("registry", "ok", "登録はまだありません（空です）")
+        except (OSError, json.JSONDecodeError):
+            add("registry", "fail",
+                "projects.json が読めません（壊れている可能性があります）",
+                "projects.json を削除すると空の登録簿から始められます"
+                "（登録だけが消え、フォルダは残ります）")
+    else:
+        add("registry", "ok", "まだありません（初回登録時に作られます）")
+
+    # config
+    if CONFIG_FILE.exists():
+        try:
+            json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
+            add("config", "ok", "config.json が読めます")
+        except (OSError, json.JSONDecodeError):
+            add("config", "warn", "config.json が読めません（既定値で動きます）",
+                "config.json を削除すると既定値に戻ります")
+    else:
+        add("config", "ok", "まだありません（既定値で動きます）")
+
+    levels = [c["level"] for c in checks]
+    status = "fail" if "fail" in levels else (
+        "warn" if "warn" in levels else "ok")
+    summary = {"ok": 0, "warn": 0, "fail": 0}
+    for lv in levels:
+        summary[lv] += 1
+    return {"ok": status != "fail", "status": status,
+            "checks": checks, "summary": summary}
+
+
 # ---------- 新規作成 ----------
 def create_project(name: str, root: str | Path, template: str = "python",
                    make_venv: bool = True, init_git: bool = True,

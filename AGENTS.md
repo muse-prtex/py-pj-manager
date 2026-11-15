@@ -24,6 +24,7 @@ python -m pj_manager.cli push NAME_OR_PATH --json
 python -m pj_manager.cli pull NAME_OR_PATH --json
 python -m pj_manager.cli log NAME_OR_PATH [-n N] --json
 python -m pj_manager.cli init NAME_OR_PATH --json
+python -m pj_manager.cli doctor --json
 python -m pj_manager.cli config show --json
 python -m pj_manager.cli config set-root DIR --json
 ```
@@ -38,6 +39,12 @@ Contract:
 - `status` output includes `git` (branch / dirty count / ahead / behind /
   last_commit) and `has_venv` — use it instead of shelling out to git for a
   quick health check.
+- `doctor` checks the environment (Python / venv / git / gh / projects_root
+  / data dir / registry / config) and returns `{"ok", "status", "checks",
+  "summary"}`. `status` is `ok` / `warn` / `fail`; exit code is 1 only when
+  a check fails — warnings (e.g. gh not logged in, a registered folder
+  gone) keep exit 0. Run it first when something looks off; the desktop
+  UI runs it at startup and shows the result in the sidebar.
 
 ## State and safety
 
