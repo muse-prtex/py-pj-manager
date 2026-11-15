@@ -19,8 +19,14 @@ You need Python 3.10+ on Windows. There is nothing to install:
 ```powershell
 git clone https://github.com/muse-prtex/py-pj-manager.git
 cd py-pj-manager
-py pjman.py        # launch the GUI
-py -c "import pj_core"   # pj_core.py is GUI-free and importable on its own
+py pjman.py        # launch the GUI (or: run.bat)
+```
+
+The code is a package under `src/pj_manager/` (`app.py` = GUI, `core.py` =
+logic). Run the test suite — standard library `unittest` only:
+
+```powershell
+py -m unittest discover -s tests -v
 ```
 
 `projects.json` and `config.json` are generated next to the scripts and are
@@ -30,7 +36,8 @@ git-ignored — safe to delete while testing.
 
 1. Fork the repository and create a topic branch.
 2. Keep changes focused; match the existing style (plain functions in
-   `pj_core.py`, tkinter widgets in `pjman.py`).
+   `core.py`, tkinter widgets in `app.py`). Add tests under `tests/` when you
+   change `core.py`.
 3. If you touch project creation or git operations, test the flow end to end
    with a throwaway folder and a local git repository.
 4. Open a pull request describing what changed and how you verified it.
@@ -38,7 +45,7 @@ git-ignored — safe to delete while testing.
 ## Ideas that would especially help
 
 - English (or other language) localization of the GUI — currently Japanese.
-- Automated tests for `pj_core.py`.
+- More automated tests for `core.py`.
 - macOS / Linux support for the "open terminal / editor" actions.
 
 ## Reporting bugs

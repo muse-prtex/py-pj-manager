@@ -52,19 +52,30 @@ window. The setting is stored in `config.json`.
 
 ## Files
 
-| File | Role |
-| --- | --- |
-| `pjman.py` | The GUI (tkinter) |
-| `pj_core.py` | Project registry, creation, git/GitHub logic (GUI-free, reusable) |
-| `run.bat` | Launcher |
-| `projects.json` | Project registry (auto-generated, git-ignored) |
-| `config.json` | Settings (auto-generated, git-ignored) |
+## Repository layout
+
+The code lives in a standard `src/` package layout, so the project can grow
+without a big reshuffle later:
+
+```
+src/pj_manager/
+    __init__.py    package version
+    app.py         the GUI (tkinter)
+    core.py        project registry, creation, git/GitHub logic (GUI-free)
+    __main__.py    enables `python -m pj_manager`
+tests/             unittest suite for core.py (standard library only)
+pjman.py           compatibility launcher (`py pjman.py` still works)
+run.bat            launcher (sets PYTHONPATH and runs the package)
+```
+
+`projects.json` (project registry) and `config.json` (settings) are
+auto-generated in the repository root and git-ignored.
 
 ## Contributing
 
 Issues and pull requests are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
 Good first areas: English UI localization (the GUI is currently Japanese),
-macOS/Linux support, and tests for `pj_core.py`.
+macOS/Linux support, and more tests for `core.py`.
 
 ## License
 

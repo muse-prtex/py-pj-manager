@@ -35,11 +35,16 @@ git config --global user.email "あなたのメール"
 
 ## ファイル構成
 
-- `pjman.py` … 画面（GUI）本体
-- `pj_core.py` … 一覧管理・作成・git/GitHub操作のロジック
+コードは `src/` パッケージ構成です（今後大きくなっても再編しなくて済む形）。
+
+- `src/pj_manager/app.py` … 画面（GUI）本体
+- `src/pj_manager/core.py` … 一覧管理・作成・git/GitHub操作のロジック
+- `src/pj_manager/__main__.py` … `python -m pj_manager` 用
+- `tests/` … core の unittest
+- `pjman.py` … 互換用ランチャー（従来どおり `py pjman.py` でも起動できます）
 - `run.bat` … 起動用
-- `projects.json` … プロジェクト一覧（自動生成）
-- `config.json` … 設定（自動生成）
+- `projects.json` … プロジェクト一覧（リポジトリのルートに自動生成）
+- `config.json` … 設定（同上）
 
 登録を外してもフォルダ自体は消えません（安全のため、この道具からはフォルダの削除はしません）。
 
