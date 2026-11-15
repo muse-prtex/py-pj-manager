@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0 — 2026-11-16
+
+- Added a modern desktop UI in `desktop/` (Tauri: Rust shell + web
+  frontend). The shell holds no logic — it drives the Python core through
+  the CLI (`--json`), so desktop / tkinter GUI / agents share one core.
+- CLI: added the `init` command (git init for a registered project).
+- The tkinter GUI remains as the zero-dependency fallback face.
+
 ## 0.4.0 — 2026-11-16
 
 - GUI redesign: dark sidebar + white cards + accent blue, flat modern look

@@ -72,6 +72,13 @@ run.bat            launcher (sets PYTHONPATH and runs the package)
 `projects.json` (project registry) and `config.json` (settings) are
 auto-generated in the repository root and git-ignored.
 
+## Desktop app (modern UI)
+
+A Tauri-based desktop app lives in [`desktop/`](desktop/README.md) — dark
+sidebar, cards, badges, search. It drives the same Python core through the
+CLI below, so both faces always agree. The tkinter GUI remains available as
+a zero-dependency fallback (`run.bat`).
+
 ## CLI for scripts and AI agents
 
 Everything the GUI does is also available headlessly:

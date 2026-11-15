@@ -1,0 +1,14 @@
+[package]
+name = "pj-manager-desktop"
+version = "0.5.0"
+edition = "2021"
+description = "Modern desktop UI for py-pj-manager (drives the Python core via its CLI)"
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }

@@ -150,6 +150,17 @@ def cmd_log(args) -> int:
     return _out({"ok": True, "log": lines}, args.json, "\n".join(lines))
 
 
+def cmd_init(args) -> int:
+    path = _resolve(args.target)
+    if core.is_git_repo(path):
+        return _out({"ok": True, "output": "already a git repository"},
+                    args.json, "already a git repository")
+    ok, out = core.git_op(path, "init", "-b", "main")
+    if not ok:
+        return _fail(out or "git init failed", args.json)
+    return _out({"ok": True, "output": out}, args.json, out)
+
+
 def cmd_config(args) -> int:
     cfg = core.load_config()
     if args.action == "show":
@@ -194,6 +205,9 @@ def build_parser() -> argparse.ArgumentParser:
     cm.add_argument("target")
     cm.add_argument("-m", "--message", required=True)
 
+    ini = sub.add_parser("init", help="git init (branch: main)")
+    ini.add_argument("target")
+
     for op in ("push", "pull"):
         g = sub.add_parser(op, help=f"git {op}")
         g.add_argument("target")
@@ -218,6 +232,7 @@ HANDLERS = {
     "push": cmd_git_op("push"),
     "pull": cmd_git_op("pull"),
     "log": cmd_log,
+    "init": cmd_init,
     "config": cmd_config,
 }
 

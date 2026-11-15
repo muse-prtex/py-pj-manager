@@ -1,10 +1,12 @@
 # AGENTS.md — working with py-pj-manager as an AI agent
 
 py-pj-manager manages a user's Python projects (create / register / open /
-git & GitHub). There are two faces over one core:
+git & GitHub). There are three faces over one core:
 
-- **GUI** (`src/pj_manager/app.py`, tkinter) — for humans. Do not try to
-  automate the GUI.
+- **Desktop UI** (`desktop/`, Tauri) — the modern face for humans. It holds
+  no logic; it spawns the CLI (below) and renders the JSON.
+- **GUI** (`src/pj_manager/app.py`, tkinter) — the zero-dependency fallback
+  face for humans. Do not try to automate either GUI.
 - **CLI** (`src/pj_manager/cli.py`) — for scripts and AI agents. Use this.
 
 ## The CLI
@@ -21,6 +23,7 @@ python -m pj_manager.cli commit NAME_OR_PATH -m "message" --json
 python -m pj_manager.cli push NAME_OR_PATH --json
 python -m pj_manager.cli pull NAME_OR_PATH --json
 python -m pj_manager.cli log NAME_OR_PATH [-n N] --json
+python -m pj_manager.cli init NAME_OR_PATH --json
 python -m pj_manager.cli config show --json
 python -m pj_manager.cli config set-root DIR --json
 ```
@@ -51,7 +54,8 @@ Contract:
 
 ## Developing
 
-- Standard library only. No new dependencies.
+- The Python core is standard library only — no new dependencies there.
+  (The optional Tauri shell in `desktop/` is Rust and holds no logic.)
 - Logic goes in `src/pj_manager/core.py` (GUI-free, unit-tested); the GUI in
   `app.py`; the CLI in `cli.py`.
 - Tests: `python -m unittest discover -s tests -v` (also standard library
