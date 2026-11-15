@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.7.0 — 2026-11-16
+
+- Robustness (found by actually exercising the CLI on boundary cases):
+  - Project names are now unique in the registry: registering a second
+    folder with an already-used name, or creating a project with a
+    registered name, is rejected with a clear error. Before, two
+    entries could share a name and `unregister` would remove both.
+  - A corrupt `projects.json` is no longer silently overwritten: the
+    next save first backs it up to `projects.json.bak-<日時>`.
+  - Malformed registry entries (not a dict, or missing `name`/`path`)
+    no longer crash `list` / `register` with `KeyError`; they are
+    skipped, and `doctor` reports them as a warning.
+  - `doctor` also warns about duplicate names in the registry, and
+    treats an empty (0-byte) `projects.json` / `config.json` as an
+    empty registry / defaults instead of reporting it corrupt.
+  - `commit` / `log` / `push` / `pull` on a non-git folder now say
+    `git リポジトリではありません（先に init してください）` instead of
+    passing git's raw `fatal:` through; on a deleted (ghost) folder
+    they say `フォルダがありません` instead of the misleading
+    `コマンドが見つかりません: git`.
+  - Over-long project names (over 255 bytes) are rejected with a clear
+    message instead of a raw `OSError`.
+- Verified still fine by real use: Japanese-named folders register and
+  resolve by name, deep (200+ byte) paths register, empty-registry
+  `list` / `doctor` behave, and `init` rescues a git-less folder.
+- Tests: 14 new tests in `tests/test_robustness.py` (31 total, all passing).
+
 ## 0.6.0 — 2026-11-16
 
 - CLI: added the `doctor` command — checks Python / venv / git / gh /

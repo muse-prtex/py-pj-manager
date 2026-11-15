@@ -57,7 +57,12 @@ Contract:
 - **Unregistering never deletes a project folder.** Nothing in this tool
   deletes project folders — keep it that way.
 - Project names must match `^[A-Za-z0-9][A-Za-z0-9_-]*$` (they become folder
-  names).
+  names). Names are unique in the registry: registering or creating a
+  second project with an already-used name is rejected, because commands
+  address projects by name. A corrupt `projects.json` is backed up to
+  `projects.json.bak-<日時>` before the next save overwrites it; malformed
+  entries are skipped (and reported by `doctor`) instead of crashing
+  other commands.
 
 ## Developing
 

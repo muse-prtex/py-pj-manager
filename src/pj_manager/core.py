@@ -75,6 +75,10 @@ python main.py
 # ---------- 汎用 ----------
 def run_cmd(cmd: list[str], cwd: Path | None = None) -> tuple[bool, str]:
     """コマンドを実行して (成功か, 出力) を返す。例外は投げない。"""
+    if cwd is not None and not Path(cwd).is_dir():
+        # subprocess は存在しない cwd で FileNotFoundError を出すが、
+        # それを「コマンドが見つかりません」と誤訳しないための先回り。
+        return False, f"フォルダがありません: {cwd}"
     try:
         p = subprocess.run(cmd, cwd=str(cwd) if cwd else None,
                            capture_output=True, text=True,
@@ -97,13 +101,31 @@ def is_git_repo(path: Path) -> bool:
 
 
 # ---------- 設定 ----------
+def _parse_json_file(path: Path):
+    """JSON ファイルを読む。空ファイルは空の値として扱う。
+
+    戻り値: (parsed, corrupt)。
+    parsed が None なら corrupt（読めない・壊れている）。
+    空ファイル / 空白だけのファイルは空の値（[] / {} を呼出側が決める）。
+    """
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return None, True
+    if not text.strip():
+        return "empty", False
+    try:
+        return json.loads(text), False
+    except json.JSONDecodeError:
+        return None, True
+
+
 def load_config() -> dict:
     cfg = {"projects_root": str(Path.home() / "Projects")}
     if CONFIG_FILE.exists():
-        try:
-            cfg.update(json.loads(CONFIG_FILE.read_text(encoding="utf-8")))
-        except (OSError, json.JSONDecodeError):
-            pass
+        data, corrupt = _parse_json_file(CONFIG_FILE)
+        if not corrupt and isinstance(data, dict):
+            cfg.update(data)
     return cfg
 
 
@@ -114,19 +136,65 @@ def save_config(cfg: dict) -> None:
 
 
 # ---------- 登録簿 ----------
+def _is_valid_entry(e) -> bool:
+    """登録簿の1件として使える形か（dict で name / path が空でない文字列）。"""
+    return (isinstance(e, dict)
+            and isinstance(e.get("name"), str) and bool(e["name"])
+            and isinstance(e.get("path"), str) and bool(e["path"]))
+
+
+def _registry_state() -> tuple[list[dict], int, bool]:
+    """(有効な登録一覧, 読み取れない件数, 壊れているか) を返す。
+
+    空ファイルは空の登録簿（壊れではない）。配列でない中身・JSON
+    構文エラーは「壊れている」。読み取れない件（dict でない・
+    name/path が無い等）は一覧から外す。外された件は doctor が
+    warn として知らせる。
+    """
+    if not REGISTRY_FILE.exists():
+        return [], 0, False
+    data, corrupt = _parse_json_file(REGISTRY_FILE)
+    if corrupt:
+        return [], 0, True
+    if data == "empty":
+        return [], 0, False
+    if not isinstance(data, list):
+        return [], 0, True
+    valid = [e for e in data if _is_valid_entry(e)]
+    return valid, len(data) - len(valid), False
+
+
 def load_registry() -> list[dict]:
-    if REGISTRY_FILE.exists():
-        try:
-            data = json.loads(REGISTRY_FILE.read_text(encoding="utf-8"))
-            if isinstance(data, list):
-                return data
-        except (OSError, json.JSONDecodeError):
-            pass
-    return []
+    """有効な登録だけを返す。壊れた登録簿は空扱い（doctor が fail を出す）。
+
+    読み取れない件があっても他のコマンドが落ちないようにする。
+    上書きで消えてしまう前に _backup_registry_if_dirty() が中身を退避する。
+    """
+    entries, _malformed, _corrupt = _registry_state()
+    return entries
+
+
+def _backup_registry_if_dirty() -> str | None:
+    """登録簿ファイルが壊れている／読み取れない件を含む場合、
+
+    上書きで失われる前に projects.json.bak-<日時> へ退避する。
+    退避したらそのパス、不要なら None を返す。
+    """
+    _entries, malformed, corrupt = _registry_state()
+    if not corrupt and malformed == 0:
+        return None
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    backup = REGISTRY_FILE.with_name(f"projects.json.bak-{stamp}")
+    try:
+        shutil.copyfile(REGISTRY_FILE, backup)
+        return str(backup)
+    except OSError:
+        return None
 
 
 def save_registry(entries: list[dict]) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    _backup_registry_if_dirty()
     REGISTRY_FILE.write_text(json.dumps(entries, ensure_ascii=False, indent=2),
                              encoding="utf-8")
 
@@ -149,6 +217,10 @@ def register_existing(path: str | Path, entries: list[dict] | None = None) -> di
     for e in entries:
         if Path(e["path"]).resolve() == p:
             raise ValueError(f"すでに登録されています: {e['name']}")
+        if e.get("name") == p.name:
+            raise ValueError(
+                f"同じ名前のプロジェクトがすでに登録されています: {p.name} "
+                f"（{e['path']}）。フォルダ名を変えるか先に unregister してください")
     entry = {
         "name": p.name,
         "path": str(p),
@@ -325,43 +397,52 @@ def doctor() -> dict:
     except OSError as e:
         add("data_dir", "fail", f"書き込めません: {DATA_DIR} ({e})")
 
-    # registry（壊れ・フォルダ無しの登録を検出）
+    # registry（壊れ・読み取れない件・同名重複・フォルダ無しの登録を検出）
     if REGISTRY_FILE.exists():
-        try:
-            data = json.loads(REGISTRY_FILE.read_text(encoding="utf-8"))
-            if not isinstance(data, list):
-                add("registry", "fail",
-                    "projects.json の中身が一覧（配列）ではありません")
-            else:
-                missing = [e.get("name", "?") for e in data
-                           if isinstance(e, dict)
-                           and not Path(e.get("path", "")).is_dir()]
-                if missing:
-                    add("registry", "warn",
-                        f"{len(data)} 件登録中・うちフォルダが無いもの: "
-                        f"{', '.join(missing)}",
-                        "存在しないフォルダの登録は unregister で外せます")
-                elif data:
-                    add("registry", "ok",
-                        f"{len(data)} 件登録中（フォルダは全て存在します）")
-                else:
-                    add("registry", "ok", "登録はまだありません（空です）")
-        except (OSError, json.JSONDecodeError):
+        entries, malformed, corrupt = _registry_state()
+        if corrupt:
             add("registry", "fail",
                 "projects.json が読めません（壊れている可能性があります）",
                 "projects.json を削除すると空の登録簿から始められます"
                 "（登録だけが消え、フォルダは残ります）")
+        else:
+            seen: dict[str, int] = {}
+            for e in entries:
+                seen[e["name"]] = seen.get(e["name"], 0) + 1
+            dupes = sorted(n for n, c in seen.items() if c > 1)
+            missing = [e["name"] for e in entries
+                       if not Path(e["path"]).is_dir()]
+            if malformed:
+                add("registry", "warn",
+                    f"{len(entries)} 件登録中・読み取れない登録が "
+                    f"{malformed} 件あります",
+                    "次に登録簿を保存するとき、読み取れない登録は "
+                    "projects.json.bak-<日時> に退避されます")
+            elif dupes:
+                add("registry", "warn",
+                    f"同じ名前の登録が重複しています: {', '.join(dupes)}",
+                    "名前で区別できないため、片方を unregister してください")
+            elif missing:
+                add("registry", "warn",
+                    f"{len(entries)} 件登録中・うちフォルダが無いもの: "
+                    f"{', '.join(missing)}",
+                    "存在しないフォルダの登録は unregister で外せます")
+            elif entries:
+                add("registry", "ok",
+                    f"{len(entries)} 件登録中（フォルダは全て存在します）")
+            else:
+                add("registry", "ok", "登録はまだありません（空です）")
     else:
         add("registry", "ok", "まだありません（初回登録時に作られます）")
 
-    # config
+    # config（空ファイルは既定値扱い＝ok）
     if CONFIG_FILE.exists():
-        try:
-            json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
-            add("config", "ok", "config.json が読めます")
-        except (OSError, json.JSONDecodeError):
+        data, corrupt = _parse_json_file(CONFIG_FILE)
+        if corrupt or (data != "empty" and not isinstance(data, dict)):
             add("config", "warn", "config.json が読めません（既定値で動きます）",
                 "config.json を削除すると既定値に戻ります")
+        else:
+            add("config", "ok", "config.json が読めます")
     else:
         add("config", "ok", "まだありません（既定値で動きます）")
 
@@ -384,6 +465,13 @@ def create_project(name: str, root: str | Path, template: str = "python",
     if not NAME_RE.match(name):
         raise ValueError("プロジェクト名は半角英数字・ハイフン・アンダースコアで、"
                          "英数字から始めてください（フォルダ名になります）")
+    if len(name.encode("utf-8")) > 255:
+        raise ValueError("プロジェクト名が長すぎます（255バイト以内にしてください）")
+    existing = find_entry(load_registry(), name)
+    if existing is not None:
+        raise ValueError(
+            f"同じ名前のプロジェクトがすでに登録されています: {name} "
+            f"（{existing['path']}）。別の名前にしてください")
     root = Path(root).expanduser()
     root.mkdir(parents=True, exist_ok=True)
     path = root / name

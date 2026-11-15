@@ -123,8 +123,27 @@ def cmd_status(args) -> int:
     return _out({"ok": True, "project": info}, args.json, human)
 
 
+def _require_dir(path: Path) -> str | None:
+    if not path.is_dir():
+        return f"フォルダがありません: {path}"
+    return None
+
+
+def _require_git_repo(path: Path) -> str | None:
+    err = _require_dir(path)
+    if err:
+        return err
+    if not core.is_git_repo(path):
+        return (f"git リポジトリではありません: {path}"
+                "（先に `init` で git 初期化してください）")
+    return None
+
+
 def cmd_commit(args) -> int:
     path = _resolve(args.target)
+    err = _require_git_repo(path)
+    if err:
+        return _fail(err, args.json)
     ok, out = core.commit_all(path, args.message)
     if not ok:
         return _fail(out or "commit failed", args.json)
@@ -134,6 +153,9 @@ def cmd_commit(args) -> int:
 def cmd_git_op(op: str):
     def run(args) -> int:
         path = _resolve(args.target)
+        err = _require_git_repo(path)
+        if err:
+            return _fail(err, args.json)
         ok, out = core.git_op(path, op)
         if not ok:
             return _fail(out or f"git {op} failed", args.json)
@@ -143,6 +165,9 @@ def cmd_git_op(op: str):
 
 def cmd_log(args) -> int:
     path = _resolve(args.target)
+    err = _require_git_repo(path)
+    if err:
+        return _fail(err, args.json)
     ok, out = core.git_op(
         path, "log", f"-{args.n}", "--pretty=%h %ad %s", "--date=short")
     if not ok:
@@ -153,6 +178,9 @@ def cmd_log(args) -> int:
 
 def cmd_init(args) -> int:
     path = _resolve(args.target)
+    err = _require_dir(path)
+    if err:
+        return _fail(err, args.json)
     if core.is_git_repo(path):
         return _out({"ok": True, "output": "already a git repository"},
                     args.json, "already a git repository")
