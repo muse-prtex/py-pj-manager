@@ -23,6 +23,27 @@ from pj_manager import core
 
 IS_WINDOWS = os.name == "nt"
 
+# ---------- テーマ（モダンなフラットデザイン） ----------
+ACCENT = "#2f6fed"
+ACCENT_DARK = "#1f55c4"
+APP_BG = "#eef0f3"
+CARD_BG = "#ffffff"
+TEXT = "#1c2330"
+MUTED = "#66707f"
+SIDE_BG = "#171c26"
+SIDE_PANEL = "#1f2634"
+SIDE_FG = "#e6e9f0"
+SIDE_SUB = "#8b93a5"
+LOG_BG = "#10141c"
+LOG_FG = "#c9d4e3"
+
+UI_FONT = "Yu Gothic UI" if IS_WINDOWS else ""
+MONO_FONT = "Consolas" if IS_WINDOWS else "DejaVu Sans Mono"
+
+
+def font(size: int, weight: str = "") -> tuple:
+    return (UI_FONT, size, weight) if weight else (UI_FONT, size)
+
 
 def open_terminal_with_venv(path: Path) -> None:
     """venv を有効化したターミナルを開く（なければ通常のターミナル）。"""
@@ -56,53 +77,130 @@ class App(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
         self.title("PJマネージャー — プロジェクト総合管理")
-        self.geometry("980x600")
+        self.geometry("1080x660")
+        self.minsize(1020, 620)
+        self.configure(bg=APP_BG)
         self.entries: list[dict] = core.load_registry()
         self.config = core.load_config()
+        self._setup_styles()
         self._build()
         self.refresh_list()
 
+    def _setup_styles(self) -> None:
+        st = ttk.Style(self)
+        st.theme_use("clam")  # 色を自由に変えられる土台テーマ
+        st.configure("TFrame", background=APP_BG)
+        st.configure("Card.TFrame", background=CARD_BG)
+        st.configure("Side.TFrame", background=SIDE_BG)
+        st.configure("TLabel", background=APP_BG, foreground=TEXT, font=font(10))
+        st.configure("Card.TLabel", background=CARD_BG, foreground=TEXT, font=font(10))
+        st.configure("Section.TLabel", background=CARD_BG, foreground=MUTED,
+                     font=font(9, "bold"))
+        st.configure("SideTitle.TLabel", background=SIDE_BG, foreground="#ffffff",
+                     font=font(15, "bold"))
+        st.configure("SideSub.TLabel", background=SIDE_BG, foreground=SIDE_SUB,
+                     font=font(8))
+        st.configure("SideSection.TLabel", background=SIDE_BG, foreground=SIDE_SUB,
+                     font=font(9, "bold"))
+        st.configure("TButton", background="#e3e7ee", foreground=TEXT,
+                     borderwidth=0, focusthickness=0, padding=(11, 6), font=font(10))
+        st.map("TButton",
+               background=[("active", "#d3dae6"), ("pressed", "#c3ccdc"),
+                           ("disabled", "#eceff4")],
+               foreground=[("disabled", "#9aa3b2")])
+        st.configure("Accent.TButton", background=ACCENT, foreground="#ffffff",
+                     borderwidth=0, focusthickness=0, padding=(11, 7),
+                     font=font(10, "bold"))
+        st.map("Accent.TButton",
+               background=[("active", ACCENT_DARK), ("pressed", ACCENT_DARK),
+                           ("disabled", "#a9c2f5")],
+               foreground=[("disabled", "#ffffff")])
+        st.configure("Side.TButton", background="#232a38", foreground=SIDE_FG,
+                     borderwidth=0, focusthickness=0, padding=(11, 6), font=font(10))
+        st.map("Side.TButton",
+               background=[("active", "#2d3648"), ("pressed", "#2d3648")])
+        st.configure("TCheckbutton", background=APP_BG, foreground=TEXT, font=font(10))
+        st.configure("TCombobox", padding=(4, 3))
+        st.configure("TEntry", padding=(4, 3))
+
     # ---------- 画面 ----------
     def _build(self) -> None:
-        left = ttk.Frame(self, padding=8)
-        left.pack(side="left", fill="y")
-        ttk.Label(left, text="プロジェクト一覧", font=("", 11, "bold")).pack(anchor="w")
-        self.listbox = tk.Listbox(left, width=34, height=24)
-        self.listbox.pack(fill="y", expand=True, pady=4)
+        # 左サイドバー（ダーク）
+        side = tk.Frame(self, bg=SIDE_BG, width=296)
+        side.pack(side="left", fill="y")
+        side.pack_propagate(False)
+        head = tk.Frame(side, bg=SIDE_BG)
+        head.pack(fill="x", padx=16, pady=(16, 4))
+        ttk.Label(head, text="PJマネージャー", style="SideTitle.TLabel").pack(anchor="w")
+        ttk.Label(head, text="PROJECT MANAGER", style="SideSub.TLabel").pack(anchor="w", pady=(1, 0))
+        ttk.Label(side, text="プロジェクト", style="SideSection.TLabel").pack(
+            anchor="w", padx=16, pady=(14, 4))
+        self.listbox = tk.Listbox(
+            side, width=34, height=10,
+            bg=SIDE_PANEL, fg=SIDE_FG,
+            selectbackground=ACCENT, selectforeground="#ffffff",
+            relief="flat", borderwidth=0, highlightthickness=0,
+            activestyle="none", font=font(10), exportselection=False)
+        self.listbox.pack(fill="both", expand=True, padx=12)
         self.listbox.bind("<<ListboxSelect>>", lambda _e: self.show_detail())
-        ttk.Button(left, text="＋ 新規プロジェクト作成", command=self.dialog_new).pack(fill="x", pady=2)
-        ttk.Button(left, text="既存フォルダを登録", command=self.dialog_register).pack(fill="x", pady=2)
-        ttk.Button(left, text="登録を外す", command=self.do_unregister).pack(fill="x", pady=2)
-        ttk.Button(left, text="作成先フォルダの設定", command=self.dialog_config).pack(fill="x", pady=2)
+        btns = tk.Frame(side, bg=SIDE_BG)
+        btns.pack(fill="x", padx=12, pady=12)
+        ttk.Button(btns, text="＋ 新規プロジェクト作成", style="Accent.TButton",
+                   command=self.dialog_new).pack(fill="x", pady=(0, 6))
+        ttk.Button(btns, text="既存フォルダを登録", style="Side.TButton",
+                   command=self.dialog_register).pack(fill="x", pady=(0, 6))
+        ttk.Button(btns, text="登録を外す", style="Side.TButton",
+                   command=self.do_unregister).pack(fill="x", pady=(0, 6))
+        ttk.Button(btns, text="作成先フォルダの設定", style="Side.TButton",
+                   command=self.dialog_config).pack(fill="x")
+        from pj_manager import __version__
+        ttk.Label(side, text=f"v{__version__}", style="SideSub.TLabel").pack(
+            anchor="w", padx=16, pady=(0, 10))
 
-        right = ttk.Frame(self, padding=8)
+        # 右メインエリア
+        right = ttk.Frame(self, padding=(14, 12, 14, 12))
         right.pack(side="left", fill="both", expand=True)
-        self.detail = ttk.Label(right, text="左の一覧からプロジェクトを選んでください",
-                                justify="left", font=("", 10))
-        self.detail.pack(anchor="w")
 
-        ops = ttk.LabelFrame(right, text="開く")
-        ops.pack(fill="x", pady=6)
-        ttk.Button(ops, text="ターミナルで開く（venv有効化）", command=self.do_open_terminal).pack(side="left", padx=3, pady=4)
-        ttk.Button(ops, text="VS Codeで開く", command=self.do_open_vscode).pack(side="left", padx=3, pady=4)
-        ttk.Button(ops, text="フォルダを開く", command=self.do_open_folder).pack(side="left", padx=3, pady=4)
+        card = ttk.Frame(right, style="Card.TFrame", padding=14)
+        card.pack(fill="x")
+        self.detail = tk.Label(card, text="左の一覧からプロジェクトを選んでください",
+                               justify="left", anchor="nw", bg=CARD_BG, fg=TEXT,
+                               font=font(10))
+        self.detail.pack(fill="x")
 
-        gitf = ttk.LabelFrame(right, text="Git")
-        gitf.pack(fill="x", pady=6)
-        ttk.Button(gitf, text="状態を更新", command=self.show_detail).pack(side="left", padx=3, pady=4)
-        ttk.Button(gitf, text="コミット", command=self.do_commit).pack(side="left", padx=3, pady=4)
-        ttk.Button(gitf, text="プッシュ", command=lambda: self.do_git_op("push")).pack(side="left", padx=3, pady=4)
-        ttk.Button(gitf, text="プル", command=lambda: self.do_git_op("pull")).pack(side="left", padx=3, pady=4)
-        ttk.Button(gitf, text="ログ（最近10件）", command=self.do_log).pack(side="left", padx=3, pady=4)
-        ttk.Button(gitf, text="git init", command=self.do_git_init).pack(side="left", padx=3, pady=4)
+        def section(title: str, buttons: list) -> None:
+            frame = ttk.Frame(right, style="Card.TFrame", padding=(14, 10, 14, 12))
+            frame.pack(fill="x", pady=(10, 0))
+            ttk.Label(frame, text=title, style="Section.TLabel").pack(anchor="w", pady=(0, 6))
+            row = ttk.Frame(frame, style="Card.TFrame")
+            row.pack(fill="x")
+            for text_, cmd, style in buttons:
+                ttk.Button(row, text=text_, style=style, command=cmd).pack(
+                    side="left", padx=(0, 6))
 
-        ghf = ttk.LabelFrame(right, text="GitHub")
-        ghf.pack(fill="x", pady=6)
-        ttk.Button(ghf, text="リポジトリを作成", command=self.do_github_create).pack(side="left", padx=3, pady=4)
-        ttk.Button(ghf, text="ブラウザで開く", command=self.do_github_open).pack(side="left", padx=3, pady=4)
+        section("開く", [
+            ("ターミナルで開く（venv有効化）", self.do_open_terminal, "Accent.TButton"),
+            ("VS Codeで開く", self.do_open_vscode, "TButton"),
+            ("フォルダを開く", self.do_open_folder, "TButton"),
+        ])
+        section("Git", [
+            ("状態を更新", self.show_detail, "TButton"),
+            ("コミット", self.do_commit, "TButton"),
+            ("プッシュ", lambda: self.do_git_op("push"), "TButton"),
+            ("プル", lambda: self.do_git_op("pull"), "TButton"),
+            ("ログ（最近10件）", self.do_log, "TButton"),
+            ("git init", self.do_git_init, "TButton"),
+        ])
+        section("GitHub", [
+            ("リポジトリを作成", self.do_github_create, "TButton"),
+            ("ブラウザで開く", self.do_github_open, "TButton"),
+        ])
 
-        ttk.Label(right, text="実行ログ").pack(anchor="w")
-        self.logbox = tk.Text(right, height=14, wrap="word")
+        ttk.Label(right, text="実行ログ").pack(anchor="w", pady=(12, 4))
+        self.logbox = tk.Text(right, height=14, wrap="word",
+                              bg=LOG_BG, fg=LOG_FG, relief="flat", borderwidth=0,
+                              highlightthickness=0, font=(MONO_FONT, 9),
+                              padx=10, pady=8)
         self.logbox.pack(fill="both", expand=True)
 
     # ---------- 補助 ----------
@@ -282,7 +380,8 @@ class App(tk.Tk):
     def dialog_new(self) -> None:
         win = tk.Toplevel(self)
         win.title("新規プロジェクト作成")
-        win.geometry("440x330")
+        win.geometry("460x380")
+        win.configure(bg=APP_BG)
         win.transient(self)
         win.grab_set()
 
@@ -321,7 +420,8 @@ class App(tk.Tk):
                                                 make_venv=mkvenv, init_git=gitinit,
                                                 github=gh, log=log) and "作成完了")
 
-        ttk.Button(win, text="作成する", command=create).pack(pady=14)
+        ttk.Button(win, text="作成する", style="Accent.TButton",
+                   command=create).pack(pady=16)
 
 
 def main() -> None:

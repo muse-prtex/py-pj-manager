@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0 — 2026-11-16
+
+- GUI redesign: dark sidebar + white cards + accent blue, flat modern look
+  (ttk "clam" theme, Yu Gothic UI on Windows). Same layout and behaviour,
+  no functional changes.
+
 ## 0.3.0 — 2026-11-16
 
 - Added an automation CLI (`src/pj_manager/cli.py`): list / create / register /
