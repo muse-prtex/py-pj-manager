@@ -1,0 +1,52 @@
+# py-pj-manager（PJマネージャー）
+
+プロジェクトの「選ぶ・作る・開く・Git/GitHubで管理する」を1つの画面にまとめた道具です。
+追加の依存はなく、Python標準機能だけで動きます。
+
+English README: [README.md](README.md)
+
+## 起動
+
+`run.bat` をダブルクリック（追加のインストールは不要で、Python標準機能だけで動きます）。
+
+## できること
+
+- **プロジェクト一覧**：登録したプロジェクトを一覧表示。選ぶと venv の有無、Gitのブランチ・未コミット件数・未プッシュ/未プル件数、最終コミット、GitHubのURLが分かります
+- **新規プロジェクト作成**：名前を入れるだけで、フォルダ作成 → テンプレート配置（Python用：`main.py` / `.gitignore` / `requirements.txt` / `README.md`）→ `.venv` 作成 → `git init` と最初のコミット → 任意で GitHub リポジトリ作成（Private/Public）まで一括で行い、一覧に登録します
+- **既存フォルダを登録**：すでにあるプロジェクトも一覧に加えられます
+- **開く系**：選んだプロジェクトを「venv有効化済みのターミナル」「VS Code」「フォルダ」で開けます
+- **Git**：状態更新、コミット（メッセージ入力つき）、プッシュ、プル、ログ表示、git init
+- **GitHub**：リポジトリ作成ボタン（Private）、ブラウザで開く。Publicで作りたい／細かい指定をしたい場合は、ターミナルから `gh` を直接使うこともできます
+
+## 新規プロジェクトの作成先
+
+初期設定はホームフォルダの `Projects` です。画面左下の「作成先フォルダの設定」から変更できます（設定は `config.json` に保存されます）。
+
+## GitHub 連携の前提
+
+GitHub機能は GitHub公式の `gh` CLI を使います。未導入の場合は https://cli.github.com/ から入れて、ターミナルで一度だけ `gh auth login` してください。未導入・未ログインでも、GitHub以外の機能はそのまま使えます。
+
+最初のコミットがスキップされる場合は、git のユーザー名/メールが未設定のことが多いです。その場合は一度だけ：
+
+```
+git config --global user.name "あなたの名前"
+git config --global user.email "あなたのメール"
+```
+
+## ファイル構成
+
+- `pjman.py` … 画面（GUI）本体
+- `pj_core.py` … 一覧管理・作成・git/GitHub操作のロジック
+- `run.bat` … 起動用
+- `projects.json` … プロジェクト一覧（自動生成）
+- `config.json` … 設定（自動生成）
+
+登録を外してもフォルダ自体は消えません（安全のため、この道具からはフォルダの削除はしません）。
+
+## コントリビュート
+
+Issue・Pull Request 歓迎です。[CONTRIBUTING.md](CONTRIBUTING.md) を見てください。
+
+## ライセンス
+
+MIT License（`LICENSE` ファイル参照）。自由に使って、改変・再配布してかまいません。

@@ -1,1 +1,71 @@
 # py-pj-manager
+
+A tiny Windows GUI to manage your Python projects in one place: **create, register,
+open, and git/GitHub them** from a single window.
+
+No dependencies beyond the Python standard library — clone it, double-click
+`run.bat`, and it runs.
+
+日本語の README は [README.ja.md](README.ja.md) にあります。
+
+## Features
+
+- **Project list** — every registered project at a glance: venv presence, git
+  branch, uncommitted / unpushed / unpulled counts, last commit, GitHub URL.
+- **Create a project in one go** — type a name and it scaffolds the folder,
+  drops in a Python template (`main.py` / `.gitignore` / `requirements.txt` /
+  `README.md`), creates `.venv`, runs `git init` with an initial commit, and can
+  optionally create the GitHub repository (private or public) — then registers
+  the project in the list.
+- **Register existing folders** — projects you already have can join the list too.
+- **Open things fast** — open a project in a venv-activated terminal, in VS Code,
+  or in Explorer.
+- **Git built in** — refresh status, commit (with a message field), push, pull,
+  view the log, `git init`.
+- **GitHub via `gh`** — create a repository or open it in the browser, using the
+  official GitHub CLI.
+
+## Quick start
+
+Requirements: Windows, Python 3.10+ (with the `py` launcher). The GitHub
+features additionally need the [`gh` CLI](https://cli.github.com/) with
+`gh auth login` done once — everything else works without it.
+
+```powershell
+git clone https://github.com/muse-prtex/py-pj-manager.git
+cd py-pj-manager
+```
+
+Then double-click **`run.bat`** (or run `py pjman.py`).
+
+New projects are created under `~/Projects` by default; change it from
+“作成先フォルダの設定” (creation folder setting) at the bottom-left of the
+window. The setting is stored in `config.json`.
+
+## Notes
+
+- If the initial commit is skipped, git identity is the usual cause. Set it once:
+  `git config --global user.name "Your Name"` and
+  `git config --global user.email "you@example.com"`.
+- Unregistering a project never deletes its folder. By design, this tool never
+  deletes project folders.
+
+## Files
+
+| File | Role |
+| --- | --- |
+| `pjman.py` | The GUI (tkinter) |
+| `pj_core.py` | Project registry, creation, git/GitHub logic (GUI-free, reusable) |
+| `run.bat` | Launcher |
+| `projects.json` | Project registry (auto-generated, git-ignored) |
+| `config.json` | Settings (auto-generated, git-ignored) |
+
+## Contributing
+
+Issues and pull requests are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
+Good first areas: English UI localization (the GUI is currently Japanese),
+macOS/Linux support, and tests for `pj_core.py`.
+
+## License
+
+MIT License — see [LICENSE](LICENSE).
