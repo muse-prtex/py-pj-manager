@@ -87,6 +87,23 @@
     word-break:break-all; line-height:1.6;
   }
   .empty{color:var(--side-sub); font-size:13px; padding:10px 4px}
+  /* ---------- 空状態（0件） ---------- */
+  .empty-hero{
+    background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:48px 24px 40px; text-align:center;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  .empty-hero[hidden]{display:none}
+  .empty-hero .big-plus{
+    width:64px; height:64px; border-radius:50%; background:#e8effd; color:var(--accent);
+    font-size:34px; font-weight:700; line-height:62px; margin-bottom:18px;
+  }
+  .empty-hero h2{font-size:19px; margin-bottom:8px}
+  .empty-hero p{font-size:13px; color:var(--muted); line-height:1.8; max-width:440px}
+  .empty-hero .row{margin-top:22px; justify-content:center}
+  .field-err{display:none; font-size:12px; color:var(--danger); margin-top:4px}
+  .field-err.show{display:block}
+  .field input.invalid{border-color:var(--danger)}
   /* ---------- モーダル ---------- */
   .overlay{
     position:fixed; inset:0; background:rgba(15,20,30,.45); display:none;
@@ -134,7 +151,17 @@
     <div class="detail-lines" id="d-lines"></div>
   </div>
 
-  <div class="card">
+  <div class="empty-hero" id="empty-hero" hidden>
+    <div class="big-plus">＋</div>
+    <h2>まだプロジェクトがありません</h2>
+    <p>新しいプロジェクトを作るか、すでにあるフォルダを登録すると、ここに一覧が表示されます。venv や Git の状態もひと目で確認できます。</p>
+    <div class="row">
+      <button class="btn accent" id="btn-new-empty">＋ 新規プロジェクト作成</button>
+      <button class="btn" id="btn-register-empty">既存フォルダを登録</button>
+    </div>
+  </div>
+
+  <div class="card" id="open-card">
     <div class="sec-title">開く</div>
     <div class="row">
       <button class="btn accent" data-open="terminal">ターミナルで開く（venv有効化）</button>
@@ -144,7 +171,7 @@
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" id="git-card">
     <div class="sec-title">Git / GitHub</div>
     <div class="row">
       <button class="btn" id="btn-refresh">状態を更新</button>
@@ -170,6 +197,7 @@
     <div class="field">
       <label>プロジェクト名（半角英数字・-・_）</label>
       <input type="text" id="f-name" placeholder="my-project">
+      <div class="field-err" id="f-name-err"></div>
     </div>
     <div class="field">
       <label>テンプレート</label>
@@ -191,10 +219,11 @@
 <!-- コミットモーダル -->
 <div class="overlay" id="modal-commit">
   <div class="modal">
-    <h2>コミット</h2>
+    <h2 id="c-title">コミット</h2>
     <div class="field">
       <label>コミットメッセージ</label>
       <input type="text" id="c-msg" placeholder="変更内容">
+      <div class="field-err" id="c-msg-err"></div>
     </div>
     <div class="row">
       <button class="btn" data-close>キャンセル</button>
@@ -207,6 +236,8 @@
 const isTauri = !!window.__TAURI__;
 const invoke = isTauri ? window.__TAURI__.core.invoke : null;
 const dialogOpen = isTauri ? window.__TAURI__.dialog.open : null;
+/* デモモードの空状態プレビュー: ?demo=empty でプロジェクト0件表示 */
+const DEMO_EMPTY = new URLSearchParams(location.search).get("demo") === "empty";
 
 /* ブラウザでのデザインプレビュー用デモデータ（Tauri外では自動で使われる） */
 const DEMO = {
@@ -249,7 +280,7 @@ function log(text){
 async function pj(args){
   if(!isTauri){
     log("$ pj-manager " + args.join(" ") + "  （デモモード）");
-    if(args[0] === "list") return structuredClone(DEMO);
+    if(args[0] === "list") return {ok:true, projects: DEMO_EMPTY ? [] : structuredClone(DEMO.projects)};
     if(args[0] === "status"){
       const p = DEMO.projects.find(x => x.name === args[1]) || DEMO.projects[0];
       return {ok:true, project:p};
@@ -325,8 +356,18 @@ async function refresh(selectName){
   if(selectName) selected = selectName;
   if(!selected && projects.length) selected = projects[0].name;
   renderList();
+  renderEmpty();
   const cur = projects.find(p => p.name === selected);
   if(cur) showDetail(cur);
+}
+
+/* 0件のときは操作カードを隠して空状態ヒーローを出す */
+function renderEmpty(){
+  const empty = projects.length === 0;
+  document.getElementById("empty-hero").hidden = !empty;
+  document.getElementById("detail-card").hidden = empty;
+  document.getElementById("open-card").hidden = empty;
+  document.getElementById("git-card").hidden = empty;
 }
 
 function needSelected(){
@@ -382,12 +423,44 @@ document.querySelectorAll("[data-open]").forEach(b => {
 function openModal(id){ document.getElementById(id).classList.add("open"); }
 function closeModals(){ document.querySelectorAll(".overlay").forEach(o => o.classList.remove("open")); }
 document.querySelectorAll("[data-close]").forEach(b => b.onclick = closeModals);
+/* 背景クリックと Esc でも閉じる */
+document.querySelectorAll(".overlay").forEach(o => o.addEventListener("click", e => { if(e.target === o) closeModals(); }));
+document.addEventListener("keydown", e => { if(e.key === "Escape") closeModals(); });
 document.getElementById("btn-new").onclick = () => openModal("modal-new");
-document.getElementById("btn-commit").onclick = () => { if(needSelected()) openModal("modal-commit"); };
+document.getElementById("btn-new-empty").onclick = () => openModal("modal-new");
+document.getElementById("btn-commit").onclick = () => {
+  const p = needSelected(); if(!p) return;
+  document.getElementById("c-title").textContent = "コミット — " + p.name;
+  document.getElementById("c-msg").value = "";
+  document.getElementById("c-msg-err").classList.remove("show");
+  document.getElementById("c-msg").classList.remove("invalid");
+  openModal("modal-commit");
+};
+
+const NAME_RE = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
+function setFieldError(inputEl, errEl, msg){
+  if(msg){ errEl.textContent = msg; errEl.classList.add("show"); inputEl.classList.add("invalid"); }
+  else { errEl.textContent = ""; errEl.classList.remove("show"); inputEl.classList.remove("invalid"); }
+}
+document.getElementById("f-name").addEventListener("input", () => {
+  setFieldError(document.getElementById("f-name"), document.getElementById("f-name-err"), "");
+});
+document.getElementById("c-msg").addEventListener("input", () => {
+  setFieldError(document.getElementById("c-msg"), document.getElementById("c-msg-err"), "");
+});
 
 document.getElementById("f-create").onclick = async () => {
-  const name = document.getElementById("f-name").value.trim();
-  if(!name){ alert("プロジェクト名を入力してください"); return; }
+  const nameEl = document.getElementById("f-name");
+  const errEl = document.getElementById("f-name-err");
+  const name = nameEl.value.trim();
+  if(!NAME_RE.test(name)){
+    setFieldError(nameEl, errEl, name
+      ? "使えるのは半角英数字・-・_ で、先頭は英数字にしてください"
+      : "プロジェクト名を入力してください");
+    nameEl.focus();
+    return;
+  }
+  setFieldError(nameEl, errEl, "");
   const args = ["create", name];
   if(!document.getElementById("f-venv").checked) args.push("--no-venv");
   if(!document.getElementById("f-git").checked) args.push("--no-git");
@@ -401,20 +474,27 @@ document.getElementById("f-create").onclick = async () => {
 };
 document.getElementById("c-do").onclick = async () => {
   const p = needSelected(); if(!p) return;
-  const msg = document.getElementById("c-msg").value.trim();
-  if(!msg){ alert("メッセージを入力してください"); return; }
+  const msgEl = document.getElementById("c-msg");
+  const msg = msgEl.value.trim();
+  if(!msg){
+    setFieldError(msgEl, document.getElementById("c-msg-err"), "コミットメッセージを入力してください");
+    msgEl.focus();
+    return;
+  }
   closeModals();
   runAndReport("commit: " + p.name, ["commit", p.name, "-m", msg]);
 };
 
-document.getElementById("btn-register").onclick = async () => {
+async function registerFlow(){
   if(!isTauri){ log("（デモモード）フォルダ選択は実アプリで動きます"); return; }
   const dir = await dialogOpen({directory:true, multiple:false, title:"登録するプロジェクトのフォルダ"});
   if(!dir) return;
   const r = await pj(["register", dir]);
   log(r.ok ? `登録しました: ${r.project.name}` : "失敗: " + r.error);
   await refresh(r.ok ? r.project.name : selected);
-};
+}
+document.getElementById("btn-register").onclick = registerFlow;
+document.getElementById("btn-register-empty").onclick = registerFlow;
 document.getElementById("btn-root").onclick = async () => {
   if(!isTauri){ log("（デモモード）フォルダ選択は実アプリで動きます"); return; }
   const dir = await dialogOpen({directory:true, multiple:false, title:"新規プロジェクトの作成先フォルダ"});

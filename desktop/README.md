@@ -43,7 +43,7 @@ cargo xwin build --release --target x86_64-pc-windows-msvc   # Windows exe (cros
 
 The frontend is a single dependency-free `desktop/ui/index.html`. Opened in
 a plain browser it runs in a demo mode with sample data, which is handy for
-design work.
+design work. Append `?demo=empty` to preview the zero-project empty state.
 
 ## Layout
 

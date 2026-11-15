@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.8.0 — 2026-11-16
+
+- Desktop UI polish (verified by actually opening the modals and the empty
+  state in a browser and screenshotting them):
+  - Zero-project empty state: the detail / open / Git cards are hidden and
+    a hero card is shown instead ("まだプロジェクトがありません" with
+    新規作成 / 既存フォルダを登録 buttons that work). Before, the main
+    area showed a bare "プロジェクトを選んでください" with dead buttons.
+    Demo preview: open the page with `?demo=empty`.
+  - Modals can now be closed with Esc or by clicking the overlay, not
+    only the キャンセル button.
+  - Inline validation instead of `alert()`: an invalid project name
+    ("bad name!") now shows "使えるのは半角英数字・-・_ で、先頭は英数字
+    にしてください" under the field and keeps the modal open; the commit
+    modal shows which project it commits ("コミット — alpha-tool") and
+    reports an empty message inline.
+- New tool: `day-run/tools/desktop_shot.py` — screenshots the desktop UI
+  in demo mode (normal view, new-project modal, name error, commit modal,
+  empty state) with Playwright + the bundled Chrome, and asserts the
+  modals really open and Esc closes them.
+- Tests: 6 new static checks for the desktop UI
+  (`tests/test_desktop_ui.py`, incl. a `node --check` of the inline
+  script when node is available). 37 tests total, all passing.
+
 ## 0.7.0 — 2026-11-16
 
 - Robustness (found by actually exercising the CLI on boundary cases):
