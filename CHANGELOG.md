@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.17.0 — 2026-11-16
+
+- Committing a clean tree is no longer a failure. `commit` used to exit 1
+  with git's raw English output ("On branch main / nothing to commit,
+  working tree clean") when there was nothing to commit — the desktop
+  UI's commit modal showed an error dialog for what is really the
+  desired end state. `core.commit_all()` now returns success with a
+  friendly localized message ("コミットする変更はありません（作業ツリー
+  はクリーンです）" / "Nothing to commit (working tree clean)") when the
+  commit fails but the tree is clean afterwards; a real failure (a hook
+  rejecting the commit, missing git identity, …) still fails, because
+  staged changes remain and the tree is not clean. Detection uses the
+  dirty count from `git_status`, not git's message text, so it does not
+  depend on git's locale.
+- Real use: in the sandbox, committed a real change, then committed the
+  same clean tree again — exit 0 in Japanese, in English, and with
+  `--json` (`{"ok": true, ...}`), and the log shows no extra commit was
+  created (screenshot `session15-commit.png`).
+- Tests: 7 new tests in `tests/test_commit.py` (clean tree succeeds in
+  both languages, a real change still creates a commit, a failing
+  pre-commit hook still fails, CLI exit code / JSON / human output).
+  109 tests total, all passing.
+- `day-run/tools/session15-commit.sh` — the real-use demo for this
+  session (create → change → commit → commit the clean tree in ja/en/JSON,
+  with the commit log at the end); run it through `term_shot.py` to
+  re-take the screenshot.
+- Note: the 7 screenshots in `docs/images/` still cannot be pushed with
+  the GitHub connector — `push_files` / `create_or_update_file` accept
+  UTF-8 text only. The images are in Box as `docs-images-v0.12.0.zip`
+  (`12_Muse/PJマネージャー`); adding them via the GitHub web UI to
+  `docs/images/` fixes the links in `docs/usage.md` and the READMEs.
+
 ## 0.16.0 — 2026-11-16
 
 - Desktop UI language audit: three values the CLI returns raw were shown

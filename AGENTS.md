@@ -50,7 +50,10 @@ Contract:
   object: `{"ok": true, ...}` on success, `{"ok": false, "error": "..."}`
   on failure.
 - Exit code is 0 on success, 1 on failure. argparse usage errors exit 2.
-- Nothing is interactive. `commit` requires `-m`.
+- Nothing is interactive. `commit` requires `-m`. Committing a clean
+  tree succeeds (exit 0) with a localized "nothing to commit" message
+  instead of failing — the desired end state is already met; a real
+  failure (hook rejection, missing git identity) still exits 1.
 - `status` output includes `git` (branch / dirty count / ahead / behind /
   last_commit) and `has_venv` — use it instead of shelling out to git for a
   quick health check.

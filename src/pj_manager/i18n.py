@@ -179,6 +179,10 @@ STRINGS: dict[str, dict[str, str]] = {
               "(If git user.name / user.email is not set, "
               "commit after setting them)",
     },
+    "core_nothing_to_commit": {
+        "ja": "コミットする変更はありません（作業ツリーはクリーンです）",
+        "en": "Nothing to commit (working tree clean)",
+    },
     "log_registered": {
         "ja": "プロジェクト一覧に登録しました",
         "en": "Registered the project in the list",

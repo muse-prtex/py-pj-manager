@@ -293,10 +293,25 @@ def git_op(path: str | Path, *args: str) -> tuple[bool, str]:
 
 
 def commit_all(path: str | Path, message: str) -> tuple[bool, str]:
+    """git add -A && git commit -m message。
+
+    変更が無くてコミットするものが無い場合は、git は終了コード 1 で
+    "nothing to commit" を返すが、望む最終状態（全部コミット済み）は
+    既に満たされているので失敗ではなく成功として扱う。失敗したのに
+    ツリーがクリーンな場合だけがこれに当たる（未設定のユーザー名や
+    フック失敗など、ステージ済みの変更が残る失敗は従来どおり失敗）。
+    git の文言はロケールで変わるので、判定は git_status の dirty 数
+    で行い、文言には依存しない。
+    """
     ok, out = git_op(path, "add", "-A")
     if not ok:
         return False, out
-    return git_op(path, "commit", "-m", message)
+    ok, out = git_op(path, "commit", "-m", message)
+    if ok:
+        return True, out
+    if git_status(path)["dirty"] == 0:
+        return True, _t("core_nothing_to_commit")
+    return False, out
 
 
 # ---------- 横断ヘルスチェック（check） ----------

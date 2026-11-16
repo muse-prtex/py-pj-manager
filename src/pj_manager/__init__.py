@@ -1,3 +1,3 @@
 """py-pj-manager — a tiny Windows GUI to manage Python projects."""
 
-__version__ = "0.16.0"
+__version__ = "0.17.0"
