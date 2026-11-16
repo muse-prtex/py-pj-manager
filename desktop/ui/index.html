@@ -368,6 +368,8 @@ const I18N = {
   demo_doctor_registry: {ja: "{count} 件登録中（フォルダは全て存在します）",
                          en: "{count} registered (all folders exist)"},
   demo_doctor_config: {ja: "config.json が読めます", en: "config.json is readable"},
+  demo_doctor_identity: {ja: "git のユーザー名・メールアドレスが設定済みです",
+                         en: "git user.name / user.email is set"},
   log_doctor_item: {ja: "環境チェック {level}: {name} — {detail}",
                     en: "Environment check {level}: {name} — {detail}"},
   log_doctor_hint: {ja: "（{hint}）", en: " ({hint})"},
@@ -452,11 +454,12 @@ const DEMO = {
 function demoDoctor(){
   return {
     ok: true, status: "warn",
-    summary: {ok: 7, warn: 1, fail: 0},
+    summary: {ok: 8, warn: 1, fail: 0},
     checks: [
       {name: "python", level: "ok", detail: "Python 3.12.3"},
       {name: "venv", level: "ok", detail: t("demo_doctor_venv")},
       {name: "git", level: "ok", detail: "git version 2.43.0"},
+      {name: "git_identity", level: "ok", detail: t("demo_doctor_identity")},
       {name: "gh", level: "warn", detail: t("demo_doctor_gh_warn"),
        hint: t("demo_doctor_gh_hint")},
       {name: "projects_root", level: "ok", detail: t("demo_doctor_root", {dir: "C:\\Users\\you\\Projects"})},

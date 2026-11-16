@@ -1,5 +1,52 @@
 # Changelog
 
+## 0.21.0 — 2026-11-16
+
+- A `commit` with git user.name / user.email not set now fails with a
+  friendly, localized message that says what to do next, instead of
+  git's raw English "Author identity unknown / Please tell me who you
+  are" (exit 128). The commands still fail (exit 1) — the desired end
+  state (a commit) is not met — but now report "git のユーザー名・
+  メールアドレスが設定されていません（`git config --global user.name
+  \"名前\"` と `git config --global user.email \"メール\"` で設定して
+  ください）" / "git user.name / user.email is not set …". Detection
+  is `core.git_identity_configured()` via `git config user.name` /
+  `user.email` exit codes (plus the GIT_AUTHOR_NAME / GIT_AUTHOR_EMAIL
+  and GIT_COMMITTER_NAME / GIT_COMMITTER_EMAIL fallbacks git itself
+  honors), so it does not depend on git's message text (which changes
+  with locale). The same idea as the clean-tree commit (v0.17.0), the
+  empty-repo log (v0.19.0) and the no-remote / no-upstream push/pull
+  (v0.20.0). A commit on a clean tree still succeeds even with no
+  identity set — there is nothing to commit, so the check is skipped.
+  The tkinter GUI's commit button uses the same path
+  (`core.commit_all`), so it shows the friendly message too.
+- `doctor` gains a `git_identity` check: it looks at the *global*
+  user.name / user.email (`git config --global`) and warns when they
+  are not set, with a hint giving the two `git config --global`
+  commands (and a note that per-repository settings are fine — the
+  commit path checks the effective identity, so a per-repository
+  identity still works). The desktop UI's demo doctor data includes
+  the new check.
+- Real use: in the sandbox, isolated git from the global config
+  (GIT_CONFIG_GLOBAL=/dev/null) and ran `commit` (Japanese, English,
+  `--json`) — all exit 1 with the friendly message and no "Author
+  identity unknown" / "fatal:"; setting the identity once (locally or
+  globally) makes the commit succeed, and a clean tree still commits
+  successfully with no identity at all (screenshot
+  `session19-identity.png`). `doctor` warns with the same hint under
+  the isolated config and is ok with the normal config.
+- Tests: 12 new tests in `tests/test_git_identity.py`
+  (`git_identity_configured` with local / global / env-var identity
+  and with none of them, `commit_all` failing friendly in ja/en/JSON
+  with no identity, succeeding on a clean tree with no identity,
+  succeeding once the identity is set, CLI exit codes, and the
+  `doctor` git_identity check ok/warn in both core and CLI form).
+  151 tests total, all passing.
+- `day-run/tools/session19-identity.sh` — the real-use demo for this
+  session (create, commit with no identity in ja/en/JSON, set the
+  identity and commit, clean-tree commit with no identity, doctor
+  warn/ok). Shot with `term_shot.py`.
+
 ## 0.20.0 — 2026-11-16
 
 - `push` / `pull` with no remote or no upstream branch configured now

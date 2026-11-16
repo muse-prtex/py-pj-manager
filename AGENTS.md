@@ -54,6 +54,13 @@ Contract:
   tree succeeds (exit 0) with a localized "nothing to commit" message
   instead of failing — the desired end state is already met; a real
   failure (hook rejection, missing git identity) still exits 1.
+  When git user.name / user.email is not set, `commit` fails (exit 1)
+  with a friendly, localized message that gives the two
+  `git config --global` commands, instead of git's raw "Author
+  identity unknown" — detected by `core.git_identity_configured()`
+  (`git config user.name` / `user.email` exit codes, plus the
+  GIT_AUTHOR_* / GIT_COMMITTER_* fallbacks git honors). A clean tree
+  still commits successfully with no identity set.
 - `status` output includes `git` (branch / dirty count / ahead / behind /
   last_commit) and `has_venv` — use it instead of shelling out to git for a
   quick health check. `status` fails (exit 1, `{"ok": false, "error": ...}`)
@@ -73,9 +80,12 @@ Contract:
   output through unchanged, and a repository with no commits yet keeps
   git's own message. The tkinter GUI's push / pull buttons use the same
   path (`core.git_push_pull`), so they show the friendly message too.
-- `doctor` checks the environment (Python / venv / git / gh / projects_root
-  / data dir / registry / config) and returns `{"ok", "status", "checks",
-  "summary"}`. `status` is `ok` / `warn` / `fail`; exit code is 1 only when
+- `doctor` checks the environment (Python / venv / git / gh / git
+  identity / projects_root / data dir / registry / config) and returns
+  `{"ok", "status", "checks", "summary"}`. The `git_identity` check
+  looks at the *global* user.name / user.email and warns when they
+  are not set (per-repository identity still works for commits, and
+  the hint says so). `status` is `ok` / `warn` / `fail`; exit code is 1 only when
   a check fails — warnings (e.g. gh not logged in, a registered folder
   gone) keep exit 0. Run it first when something looks off; the desktop
   UI runs it at startup and shows the result in the sidebar.

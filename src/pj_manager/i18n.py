@@ -183,6 +183,14 @@ STRINGS: dict[str, dict[str, str]] = {
         "ja": "コミットする変更はありません（作業ツリーはクリーンです）",
         "en": "Nothing to commit (working tree clean)",
     },
+    "core_no_git_identity": {
+        "ja": "git のユーザー名・メールアドレスが設定されていません"
+              "（`git config --global user.name \"名前\"` と "
+              "`git config --global user.email \"メール\"` で設定してください）",
+        "en": "git user.name / user.email is not set "
+              "(set them with `git config --global user.name \"Your Name\"` "
+              "and `git config --global user.email \"you@example.com\"`)",
+    },
     "log_registered": {
         "ja": "プロジェクト一覧に登録しました",
         "en": "Registered the project in the list",
@@ -254,6 +262,22 @@ STRINGS: dict[str, dict[str, str]] = {
     "doctor_gh_missing_hint": {
         "ja": "GitHub 機能を使う場合は https://cli.github.com/ からインストール",
         "en": "To use GitHub features, install it from https://cli.github.com/",
+    },
+    "doctor_identity_ok": {
+        "ja": "git のユーザー名・メールアドレスが設定済みです",
+        "en": "git user.name / user.email is set",
+    },
+    "doctor_identity_missing": {
+        "ja": "git のユーザー名・メールアドレスがグローバルに設定されていません",
+        "en": "git user.name / user.email is not set globally",
+    },
+    "doctor_identity_missing_hint": {
+        "ja": "`git config --global user.name \"名前\"` と "
+              "`git config --global user.email \"メール\"` で設定してください"
+              "（リポジトリごとに設定している場合は問題ありません）",
+        "en": "Set them with `git config --global user.name \"Your Name\"` "
+              "and `git config --global user.email \"you@example.com\"` "
+              "(no problem if you set them per-repository)",
     },
     "doctor_root_ok": {
         "ja": "存在します: {path}",

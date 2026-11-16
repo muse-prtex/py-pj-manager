@@ -342,6 +342,34 @@ def has_commits(path: str | Path) -> bool:
     return ok
 
 
+def git_identity_configured(path: str | Path) -> bool:
+    """コミットに使う user.name / user.email が設定済みか（有効な設定）。
+
+    `git config user.name` / `user.email` はローカル・グローバル・
+    システムの設定を合わせた有効値を返し、未設定なら終了コード 1
+    になる。判定は終了コードと空かどうかだけで行い、git の文言
+    （ロケールで変わる）には依存しない。git が無い環境では False。
+    `git commit` は設定の代わりに GIT_AUTHOR_NAME / GIT_AUTHOR_EMAIL
+    （committer 側は GIT_COMMITTER_NAME / GIT_COMMITTER_EMAIL）も
+    見るので、環境変数で補われている場合も設定済みとみなす。
+    """
+    if not shutil.which("git"):
+        return False
+
+    def _config(key: str) -> str:
+        ok, out = run_cmd(["git", "config", key], cwd=Path(path))
+        return out.strip() if ok and out.strip() else ""
+
+    cfg_name = _config("user.name")
+    cfg_email = _config("user.email")
+    author_name = os.environ.get("GIT_AUTHOR_NAME") or cfg_name
+    author_email = os.environ.get("GIT_AUTHOR_EMAIL") or cfg_email
+    committer_name = os.environ.get("GIT_COMMITTER_NAME") or cfg_name
+    committer_email = os.environ.get("GIT_COMMITTER_EMAIL") or cfg_email
+    return bool(author_name and author_email
+                and committer_name and committer_email)
+
+
 def commit_all(path: str | Path, message: str) -> tuple[bool, str]:
     """git add -A && git commit -m message。
 
@@ -352,10 +380,22 @@ def commit_all(path: str | Path, message: str) -> tuple[bool, str]:
     フック失敗など、ステージ済みの変更が残る失敗は従来どおり失敗）。
     git の文言はロケールで変わるので、判定は git_status の dirty 数
     で行い、文言には依存しない。
+
+    user.name / user.email が未設定のままコミットしようとすると git は
+    終了コード 128 で英語の "Author identity unknown" を返すが、
+    次の一手は決まっている（`git config --global user.name` /
+    `user.email` で設定する）ので、コミットを試す前に
+    git_identity_configured() で検出して日英の親切な文言で失敗する。
+    変更が無い場合は identity が無くても成功扱い（コミットを作る
+    必要が無いため）。
     """
     ok, out = git_op(path, "add", "-A")
     if not ok:
         return False, out
+    if git_status(path)["dirty"] == 0:
+        return True, _t("core_nothing_to_commit")
+    if not git_identity_configured(path):
+        return False, _t("core_no_git_identity")
     ok, out = git_op(path, "commit", "-m", message)
     if ok:
         return True, out
@@ -509,6 +549,21 @@ def doctor() -> dict:
     else:
         add("git", "warn", _t("doctor_git_missing"),
             _t("doctor_git_missing_hint"))
+
+    # git identity（コミットに使う user.name / user.email）。
+    # doctor は環境の点検なので、リポジトリごとの設定ではなく
+    # グローバル設定を見る。リポジトリごとに設定している場合は
+    # コミット自体は動くので、warn のヒントにその旨を書く。
+    # 判定は `git config --global` の終了コードだけで行う。
+    if git:
+        ok_name, out_name = run_cmd(["git", "config", "--global", "user.name"])
+        ok_email, out_email = run_cmd(
+            ["git", "config", "--global", "user.email"])
+        if ok_name and out_name.strip() and ok_email and out_email.strip():
+            add("git_identity", "ok", _t("doctor_identity_ok"))
+        else:
+            add("git_identity", "warn", _t("doctor_identity_missing"),
+                _t("doctor_identity_missing_hint"))
 
     # gh
     ok, _msg = gh_available()
