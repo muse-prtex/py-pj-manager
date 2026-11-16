@@ -300,6 +300,14 @@ const I18N = {
   doctor_checking: {ja: "環境チェック中…", en: "Checking environment…"},
   doctor_line: {ja: "環境チェック: {status}（{ok} ok / {warn} warn / {fail} fail）",
                 en: "Environment check: {status} ({ok} ok / {warn} warn / {fail} fail)"},
+  /* doctor の status / level は CLI が ok / warn / fail の素の値で返すため、
+     表示するときに訳す（訳さず出すと日本語表示に warn のまま残る）。 */
+  status_ok: {ja: "正常", en: "ok"},
+  status_warn: {ja: "注意", en: "warn"},
+  status_fail: {ja: "異常", en: "fail"},
+  /* プロジェクトの origin は CLI が created / existing の素の値で返す。 */
+  origin_created: {ja: "作成", en: "created"},
+  origin_existing: {ja: "登録", en: "existing"},
   doctor_unavailable: {ja: "環境チェック: 取得できませんでした", en: "Environment check: unavailable"},
   root_line: {ja: "作成先: {dir}", en: "Projects folder: {dir}"},
   ver_demo: {ja: "Desktop (Tauri) — デモモード", en: "Desktop (Tauri) — demo mode"},
@@ -375,6 +383,15 @@ let rootDir = "";       /* 直近の projects_root（同上） */
 
 function normalizeLang(v){ return (v === "en" || v === "ja") ? v : "ja"; }
 
+/* CLI が返す素の値（ok / warn / fail、created / existing）を表示言語に
+   訳す。未知の値はそのまま出す（将来の値が増えても表示が壊れない）。 */
+function statusText(s){
+  return {ok: t("status_ok"), warn: t("status_warn"), fail: t("status_fail")}[s] || s;
+}
+function originText(o){
+  return {created: t("origin_created"), existing: t("origin_existing")}[o] || o;
+}
+
 function t(key, params){
   const entry = I18N[key] || {};
   let text = entry[lang] || entry.ja || key;
@@ -410,7 +427,7 @@ function renderDoctorLine(){
   const d = lastDoctor;
   if(d.ok !== undefined){
     const s = d.summary || {ok: 0, warn: 0, fail: 0};
-    el.textContent = t("doctor_line", {status: d.status, ok: s.ok, warn: s.warn, fail: s.fail});
+    el.textContent = t("doctor_line", {status: statusText(d.status), ok: s.ok, warn: s.warn, fail: s.fail});
     el.classList.toggle("warn", d.status === "warn");
     el.classList.toggle("fail", d.status === "fail");
   } else {
@@ -426,7 +443,7 @@ const DEMO = {
      git:{is_git:true, branch:"main", dirty:0, ahead:0, behind:0, remote:"https://github.com/you/alpha-tool.git", last_commit:"f3f50b4 2026-11-16 tweak via CLI"}},
     {name:"beta-notes", path:"C:\\Users\\you\\Projects\\beta-notes", origin:"created", created_at:"2026-11-15", exists:true, has_venv:false,
      git:{is_git:true, branch:"main", dirty:3, ahead:1, behind:0, remote:"", last_commit:"9ab12cd 2026-11-15 メモ追加"}},
-    {name:"gamma-legacy", path:"D:\\work\\gamma-legacy", origin:"registered", created_at:"2026-11-10", exists:true, has_venv:false,
+    {name:"gamma-legacy", path:"D:\\work\\gamma-legacy", origin:"existing", created_at:"2026-11-10", exists:true, has_venv:false,
      git:{is_git:false, branch:"", dirty:0, ahead:0, behind:0, remote:"", last_commit:""}},
   ]
 };
@@ -520,7 +537,7 @@ function showDetail(p){
     chips.push(`<span class="chip gray">${t("chip_not_git")}</span>`);
   }
   document.getElementById("d-chips").innerHTML = chips.join("");
-  const lines = [t("detail_registered", {date: p.created_at || "-", origin: p.origin || "-"})];
+  const lines = [t("detail_registered", {date: p.created_at || "-", origin: p.origin ? originText(p.origin) : "-"})];
   if(p.git && p.git.is_git){
     lines.push(t("detail_last_commit", {last: p.git.last_commit || "-"}));
     lines.push(t("detail_github", {remote: p.git.remote || t("detail_no_github")}));
@@ -726,7 +743,7 @@ document.getElementById("lang-select").addEventListener("change", async (e) => {
     lastDoctor = d;
     renderDoctorLine();
     for(const c of (d.checks || [])){
-      if(c.level !== "ok") log(t("log_doctor_item", {level: c.level, name: c.name, detail: c.detail})
+      if(c.level !== "ok") log(t("log_doctor_item", {level: statusText(c.level), name: c.name, detail: c.detail})
         + (c.hint ? t("log_doctor_hint", {hint: c.hint}) : ""));
     }
   }catch(e){

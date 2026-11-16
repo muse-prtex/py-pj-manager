@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.16.0 — 2026-11-16
+
+- Desktop UI language audit: three values the CLI returns raw were shown
+  untranslated — the doctor status (`warn` stayed English in the Japanese
+  sidebar line and in the log's doctor items) and the project's origin
+  (`created` / `existing` in the detail line). They now go through the
+  `I18N` dictionary (`status_ok` / `status_warn` / `status_fail`,
+  `origin_created` / `origin_existing`) via new `statusText()` /
+  `originText()` helpers, with unknown values passed through unchanged.
+  The demo data's `gamma-legacy` also used an origin (`registered`) the
+  CLI never returns; it is now `existing`, matching the real contract.
+- Real use: opened the desktop UI in the browser demo and verified both
+  languages — Japanese shows 「環境チェック: 注意（7 ok / 1 warn / 0 fail）」
+  and 「登録日: 2026-11-16（作成）」, English shows
+  "Environment check: warn (7 ok / 1 warn / 0 fail)" and
+  "Registered: 2026-11-16 (created)" (screenshots
+  `session14-desktop.png`, `session14-desktop-en.png`).
+- Tests: 2 new tests in `tests/test_desktop_ui.py` (static wiring of
+  `statusText` / `originText` plus demo-origin values, and a node-run
+  check of the actual translations in both languages incl. unknown-value
+  pass-through). 102 tests total, all passing.
+- `day-run/tools/desktop_shot.py` now asserts the doctor line and the
+  detail line in both languages (still 7 shots total).
+
 ## 0.15.0 — 2026-11-16
 
 - The Tauri desktop UI now follows the display language (ja / en) like

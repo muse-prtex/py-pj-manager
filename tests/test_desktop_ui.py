@@ -128,7 +128,8 @@ class DesktopUiI18nTestCase(unittest.TestCase):
                     "detail_github", "commit_title", "err_name_chars",
                     "err_msg_required", "log_failed", "log_created",
                     "confirm_unregister", "doctor_line", "ver_demo",
-                    "dialog_register_title"):
+                    "dialog_register_title", "status_ok", "status_warn",
+                    "status_fail", "origin_created", "origin_existing"):
             self.assertIn(f't("{key}"', script, key)
         # デモの doctor 結果は言語で組み立てる関数（定数オブジェクトではない）
         self.assertIn("function demoDoctor", script)
@@ -141,6 +142,61 @@ class DesktopUiI18nTestCase(unittest.TestCase):
         assert m, "no applyLanguage function found"
         self.assertIn('"ver"', m.group(1))
         self.assertIn('t("ver_demo")', m.group(1))
+
+    def test_status_and_origin_are_localized(self):
+        """doctor の status / level とプロジェクトの origin は素の値で
+        出さず、表示言語に訳す（セッション13のバージョン行と同じ漏れ）。"""
+        script = _script(_read_html())
+        self.assertIn("statusText(d.status)", script)
+        self.assertIn("statusText(c.level)", script)
+        self.assertIn("originText(p.origin)", script)
+        self.assertNotIn("{status: d.status", script)
+        self.assertNotIn("{level: c.level", script)
+        # デモデータの origin は CLI が実際に返す値だけにする
+        origins = re.findall(r'origin:"(\w+)"', script)
+        self.assertTrue(origins, "no demo origins found")
+        self.assertEqual(set(origins) - {"created", "existing"}, set(),
+                         f"unknown demo origin: {sorted(set(origins))}")
+
+    @unittest.skipUnless(shutil.which("node"), "node not available")
+    def test_status_and_origin_translations(self):
+        """statusText / originText を node で実際に動かして訳を確認する。"""
+        script = _script(_read_html())
+        m = re.search(r"const I18N = (\{.*?\n\});", script, re.S)
+        assert m, "no I18N literal found"
+        funcs = []
+        for name in ("t", "statusText", "originText"):
+            fm = re.search(r"function " + name + r"\(.*?\)\{.*?\n\}",
+                           script, re.S)
+            assert fm, f"no {name} function found"
+            funcs.append(fm.group(0))
+        code = ("const I18N = " + m.group(1) + ";\n"
+                + "\n".join(funcs) + "\n"
+                + "lang = process.argv[2];\n"
+                + "console.log(JSON.stringify({\n"
+                + "  warn: statusText('warn'), ok: statusText('ok'),\n"
+                + "  fail: statusText('fail'), unknown: statusText('zzz'),\n"
+                + "  created: originText('created'),\n"
+                + "  existing: originText('existing'),\n"
+                + "  weird: originText('weird')}));\n")
+        with tempfile.NamedTemporaryFile("w", suffix=".js",
+                                         delete=False, encoding="utf-8") as f:
+            f.write(code)
+            tmp = f.name
+        try:
+            for lang, expected in (
+                    ("ja", {"warn": "注意", "ok": "正常", "fail": "異常",
+                            "unknown": "zzz", "created": "作成",
+                            "existing": "登録", "weird": "weird"}),
+                    ("en", {"warn": "warn", "ok": "ok", "fail": "fail",
+                            "unknown": "zzz", "created": "created",
+                            "existing": "existing", "weird": "weird"})):
+                r = subprocess.run(["node", tmp, lang],
+                                   capture_output=True, text=True, timeout=30)
+                self.assertEqual(r.returncode, 0, r.stderr)
+                self.assertEqual(json.loads(r.stdout), expected, lang)
+        finally:
+            Path(tmp).unlink(missing_ok=True)
 
     @unittest.skipUnless(shutil.which("node"), "node not available")
     def test_i18n_dict_complete(self):
