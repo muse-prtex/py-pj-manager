@@ -388,7 +388,16 @@ def commit_all(path: str | Path, message: str) -> tuple[bool, str]:
     git_identity_configured() で検出して日英の親切な文言で失敗する。
     変更が無い場合は identity が無くても成功扱い（コミットを作る
     必要が無いため）。
+
+    コミットメッセージが空（空文字・空白だけ）の場合は、git に渡す
+    前に日英の親切な文言で失敗する。git は終了コード 1 で英語の
+    "Aborting commit due to empty commit message." を返すだけだが、
+    次の一手は決まっている（-m でメッセージを指定する）ので、
+    セッション15〜19と同じ考え方。`git add -A` より前に弾くので、
+    失敗しても変更がステージされることはない。
     """
+    if not message or not message.strip():
+        return False, _t("core_empty_commit_message")
     ok, out = git_op(path, "add", "-A")
     if not ok:
         return False, out

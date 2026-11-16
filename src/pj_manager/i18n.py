@@ -191,6 +191,12 @@ STRINGS: dict[str, dict[str, str]] = {
               "(set them with `git config --global user.name \"Your Name\"` "
               "and `git config --global user.email \"you@example.com\"`)",
     },
+    "core_empty_commit_message": {
+        "ja": "コミットメッセージが空です"
+              "（-m \"メッセージ\" でコミットメッセージを指定してください）",
+        "en": "Commit message is empty "
+              "(specify one with -m \"message\")",
+    },
     "log_registered": {
         "ja": "プロジェクト一覧に登録しました",
         "en": "Registered the project in the list",

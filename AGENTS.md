@@ -61,6 +61,16 @@ Contract:
   (`git config user.name` / `user.email` exit codes, plus the
   GIT_AUTHOR_* / GIT_COMMITTER_* fallbacks git honors). A clean tree
   still commits successfully with no identity set.
+- An empty commit message (`-m ""` or whitespace only) fails (exit 1)
+  with a friendly, localized message — "コミットメッセージが空です
+  （-m \"メッセージ\" でコミットメッセージを指定してください）" /
+  "Commit message is empty (specify one with -m \"message\")" — instead
+  of git's raw "Aborting commit due to empty commit message." The check
+  runs in `core.commit_all` before `git add -A`, so nothing gets
+  staged, and before the clean-tree check, so it also fails on a clean
+  tree. Both GUIs already guard this on their side (tkinter returns
+  early on an empty dialog answer; the desktop UI shows its inline
+  error), so the core check covers the CLI and agent callers.
 - `status` output includes `git` (branch / dirty count / ahead / behind /
   last_commit) and `has_venv` — use it instead of shelling out to git for a
   quick health check. `status` fails (exit 1, `{"ok": false, "error": ...}`)

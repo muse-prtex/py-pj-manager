@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.22.0 — 2026-11-16
+
+- A `commit` with an empty commit message (`-m ""` or whitespace only)
+  now fails with a friendly, localized message that says what to do
+  next — "コミットメッセージが空です（-m \"メッセージ\" でコミット
+  メッセージを指定してください）" / "Commit message is empty
+  (specify one with -m \"message\")" — instead of git's raw English
+  "Aborting commit due to empty commit message." The failure stays a
+  failure (exit 1): the desired end state (a commit) is not met. The
+  check happens in `core.commit_all` before `git add -A`, so a failed
+  attempt leaves nothing staged, and it runs before the clean-tree
+  check — an empty message is a caller error even on a clean tree.
+  The same idea as the clean-tree commit (v0.17.0), the empty-repo log
+  (v0.19.0), the no-remote / no-upstream push/pull (v0.20.0) and the
+  no-identity commit (v0.21.0). Both GUIs already guard this on their
+  side (tkinter returns early on an empty dialog answer; the desktop
+  UI shows its inline `err_msg_required`), so the core check covers
+  the CLI and agent callers.
+- Real use: in the sandbox, created a project, changed a file, and
+  ran `commit` with `-m ""` and `-m "   "` (Japanese, English,
+  `--json`) — all exit 1 with the friendly message and no "Aborting
+  commit", nothing staged, no extra commit; a real message afterwards
+  commits normally (screenshot `session20-commit-msg.png`).
+- Tests: 8 new tests in `tests/test_commit_message.py` (core: empty /
+  whitespace-only messages fail friendly in ja/en, leave nothing
+  staged and no extra commit, fail even on a clean tree, and a real
+  message still commits afterwards; CLI: ja/en/JSON with exit 1).
+
 ## 0.21.0 — 2026-11-16
 
 - A `commit` with git user.name / user.email not set now fails with a
