@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="color-scheme" content="light">
-<title>PJマネージャー</title>
+<title data-i18n="app_title">PJマネージャー</title>
 <style>
   :root{
     --accent:#2f6fed; --accent-dark:#1f55c4;
@@ -68,6 +68,13 @@
   .ver{font-size:11px; color:var(--side-sub); margin-top:4px}
   .ver.warn{color:#f5c66b}
   .ver.fail{color:#ff9d94}
+  /* ---------- 言語切替 ---------- */
+  .lang-row{display:flex; align-items:center; gap:8px; margin-top:12px; font-size:12px; color:var(--side-sub)}
+  .lang-row select{
+    background:var(--side-panel); border:1px solid #2a3345; border-radius:8px;
+    color:var(--side-fg); padding:5px 8px; font-family:inherit; font-size:12px; outline:none;
+  }
+  .lang-row select:focus{border-color:var(--accent)}
   /* ---------- メイン ---------- */
   main{flex:1; overflow-y:auto; padding:16px 18px; display:flex; flex-direction:column; gap:12px}
   .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px 18px}
@@ -128,15 +135,22 @@
 </head>
 <body>
 <aside>
-  <h1>PJマネージャー</h1>
+  <h1 data-i18n="app_title">PJマネージャー</h1>
   <div class="sub">PROJECT MANAGER</div>
-  <input id="filter" class="search" type="text" placeholder="プロジェクトを検索">
-  <div class="side-label">プロジェクト</div>
+  <input id="filter" class="search" type="text" placeholder="プロジェクトを検索" data-i18n-placeholder="search_placeholder">
+  <div class="side-label" data-i18n="side_projects">プロジェクト</div>
   <div id="list"></div>
   <div class="side-btns">
-    <button class="btn accent" id="btn-new">＋ 新規プロジェクト作成</button>
-    <button class="btn side" id="btn-register">既存フォルダを登録</button>
-    <button class="btn side" id="btn-root">作成先フォルダの設定</button>
+    <button class="btn accent" id="btn-new" data-i18n="btn_new">＋ 新規プロジェクト作成</button>
+    <button class="btn side" id="btn-register" data-i18n="btn_register">既存フォルダを登録</button>
+    <button class="btn side" id="btn-root" data-i18n="btn_root">作成先フォルダの設定</button>
+  </div>
+  <div class="lang-row">
+    <label for="lang-select" data-i18n="lang_label">言語</label>
+    <select id="lang-select">
+      <option value="ja">日本語</option>
+      <option value="en">English</option>
+    </select>
   </div>
   <div class="root-line" id="root-line"></div>
   <div class="ver" id="doctor-line">環境チェック中…</div>
@@ -145,7 +159,7 @@
 
 <main>
   <div class="card" id="detail-card">
-    <div class="pname" id="d-name">プロジェクトを選んでください</div>
+    <div class="pname" id="d-name" data-i18n="detail_placeholder">プロジェクトを選んでください</div>
     <div class="ppath" id="d-path"></div>
     <div class="chips" id="d-chips"></div>
     <div class="detail-lines" id="d-lines"></div>
@@ -153,39 +167,39 @@
 
   <div class="empty-hero" id="empty-hero" hidden>
     <div class="big-plus">＋</div>
-    <h2>まだプロジェクトがありません</h2>
-    <p>新しいプロジェクトを作るか、すでにあるフォルダを登録すると、ここに一覧が表示されます。venv や Git の状態もひと目で確認できます。</p>
+    <h2 data-i18n="empty_title">まだプロジェクトがありません</h2>
+    <p data-i18n="empty_text">新しいプロジェクトを作るか、すでにあるフォルダを登録すると、ここに一覧が表示されます。venv や Git の状態もひと目で確認できます。</p>
     <div class="row">
-      <button class="btn accent" id="btn-new-empty">＋ 新規プロジェクト作成</button>
-      <button class="btn" id="btn-register-empty">既存フォルダを登録</button>
+      <button class="btn accent" id="btn-new-empty" data-i18n="btn_new">＋ 新規プロジェクト作成</button>
+      <button class="btn" id="btn-register-empty" data-i18n="btn_register">既存フォルダを登録</button>
     </div>
   </div>
 
   <div class="card" id="open-card">
-    <div class="sec-title">開く</div>
+    <div class="sec-title" data-i18n="sec_open">開く</div>
     <div class="row">
-      <button class="btn accent" data-open="terminal">ターミナルで開く（venv有効化）</button>
-      <button class="btn" data-open="vscode">VS Codeで開く</button>
-      <button class="btn" data-open="folder">フォルダを開く</button>
-      <button class="btn danger" id="btn-unregister">登録を外す</button>
+      <button class="btn accent" data-open="terminal" data-i18n="open_terminal">ターミナルで開く（venv有効化）</button>
+      <button class="btn" data-open="vscode" data-i18n="open_vscode">VS Codeで開く</button>
+      <button class="btn" data-open="folder" data-i18n="open_folder">フォルダを開く</button>
+      <button class="btn danger" id="btn-unregister" data-i18n="btn_unregister">登録を外す</button>
     </div>
   </div>
 
   <div class="card" id="git-card">
-    <div class="sec-title">Git / GitHub</div>
+    <div class="sec-title" data-i18n="sec_git">Git / GitHub</div>
     <div class="row">
-      <button class="btn" id="btn-refresh">状態を更新</button>
-      <button class="btn" id="btn-commit">コミット</button>
-      <button class="btn" data-git="push">プッシュ</button>
-      <button class="btn" data-git="pull">プル</button>
-      <button class="btn" id="btn-log">ログ（最近10件）</button>
+      <button class="btn" id="btn-refresh" data-i18n="btn_refresh">状態を更新</button>
+      <button class="btn" id="btn-commit" data-i18n="btn_commit">コミット</button>
+      <button class="btn" data-git="push" data-i18n="btn_push">プッシュ</button>
+      <button class="btn" data-git="pull" data-i18n="btn_pull">プル</button>
+      <button class="btn" id="btn-log" data-i18n="btn_log">ログ（最近10件）</button>
       <button class="btn" id="btn-init">git init</button>
-      <button class="btn" id="btn-gh-open">GitHubをブラウザで開く</button>
+      <button class="btn" id="btn-gh-open" data-i18n="btn_gh_open">GitHubをブラウザで開く</button>
     </div>
   </div>
 
   <div>
-    <div class="sec-title">実行ログ</div>
+    <div class="sec-title" data-i18n="sec_log">実行ログ</div>
     <div id="log"></div>
   </div>
 </main>
@@ -193,25 +207,25 @@
 <!-- 新規作成モーダル -->
 <div class="overlay" id="modal-new">
   <div class="modal">
-    <h2>新規プロジェクト作成</h2>
+    <h2 data-i18n="modal_new_title">新規プロジェクト作成</h2>
     <div class="field">
-      <label>プロジェクト名（半角英数字・-・_）</label>
+      <label data-i18n="label_name">プロジェクト名（半角英数字・-・_）</label>
       <input type="text" id="f-name" placeholder="my-project">
       <div class="field-err" id="f-name-err"></div>
     </div>
     <div class="field">
-      <label>テンプレート</label>
+      <label data-i18n="label_template">テンプレート</label>
       <select id="f-template"><option value="python">python</option><option value="empty">empty</option></select>
     </div>
-    <label class="check"><input type="checkbox" id="f-venv" checked> venv（.venv）を作成する</label>
-    <label class="check"><input type="checkbox" id="f-git" checked> git init して最初のコミットまで作る</label>
+    <label class="check"><input type="checkbox" id="f-venv" checked> <span data-i18n="check_venv">venv（.venv）を作成する</span></label>
+    <label class="check"><input type="checkbox" id="f-git" checked> <span data-i18n="check_git">git init して最初のコミットまで作る</span></label>
     <div class="field">
-      <label>GitHubリポジトリ</label>
-      <select id="f-github"><option value="none">作らない</option><option value="private">private</option><option value="public">public</option></select>
+      <label data-i18n="label_github">GitHubリポジトリ</label>
+      <select id="f-github"><option value="none" data-i18n="gh_none">作らない</option><option value="private">private</option><option value="public">public</option></select>
     </div>
     <div class="row">
-      <button class="btn" data-close>キャンセル</button>
-      <button class="btn accent" id="f-create">作成する</button>
+      <button class="btn" data-close data-i18n="btn_cancel">キャンセル</button>
+      <button class="btn accent" id="f-create" data-i18n="btn_create">作成する</button>
     </div>
   </div>
 </div>
@@ -219,15 +233,15 @@
 <!-- コミットモーダル -->
 <div class="overlay" id="modal-commit">
   <div class="modal">
-    <h2 id="c-title">コミット</h2>
+    <h2 id="c-title" data-i18n="modal_commit_title">コミット</h2>
     <div class="field">
-      <label>コミットメッセージ</label>
-      <input type="text" id="c-msg" placeholder="変更内容">
+      <label data-i18n="label_commit_msg">コミットメッセージ</label>
+      <input type="text" id="c-msg" placeholder="変更内容" data-i18n-placeholder="commit_msg_placeholder">
       <div class="field-err" id="c-msg-err"></div>
     </div>
     <div class="row">
-      <button class="btn" data-close>キャンセル</button>
-      <button class="btn accent" id="c-do">コミットする</button>
+      <button class="btn" data-close data-i18n="btn_cancel">キャンセル</button>
+      <button class="btn accent" id="c-do" data-i18n="btn_commit_do">コミットする</button>
     </div>
   </div>
 </div>
@@ -238,6 +252,171 @@ const invoke = isTauri ? window.__TAURI__.core.invoke : null;
 const dialogOpen = isTauri ? window.__TAURI__.dialog.open : null;
 /* デモモードの空状態プレビュー: ?demo=empty でプロジェクト0件表示 */
 const DEMO_EMPTY = new URLSearchParams(location.search).get("demo") === "empty";
+
+/* ---------- 表示言語 (ja / en) ---------- */
+/* 辞書はここだけ。Python 側の src/pj_manager/i18n.py とは別管理
+   （デスクトップ UI は CLI を呼ぶだけで Python を import しない）。
+   言語は Tauri では config.json の `language`、デモでは ?lang= /
+   localStorage の `pj_lang`。切替はサイドバー下部のセレクトから。 */
+const I18N = {
+  app_title: {ja: "PJマネージャー", en: "PJ Manager"},
+  search_placeholder: {ja: "プロジェクトを検索", en: "Search projects"},
+  side_projects: {ja: "プロジェクト", en: "Projects"},
+  btn_new: {ja: "＋ 新規プロジェクト作成", en: "+ New project"},
+  btn_register: {ja: "既存フォルダを登録", en: "Register existing folder"},
+  btn_root: {ja: "作成先フォルダの設定", en: "Set projects folder"},
+  lang_label: {ja: "言語", en: "Language"},
+  detail_placeholder: {ja: "プロジェクトを選んでください", en: "Select a project"},
+  empty_title: {ja: "まだプロジェクトがありません", en: "No projects yet"},
+  empty_text: {ja: "新しいプロジェクトを作るか、すでにあるフォルダを登録すると、ここに一覧が表示されます。venv や Git の状態もひと目で確認できます。",
+               en: "Create a new project or register an existing folder and it will show up here. You can see venv and Git status at a glance."},
+  sec_open: {ja: "開く", en: "Open"},
+  open_terminal: {ja: "ターミナルで開く（venv有効化）", en: "Open terminal (with venv)"},
+  open_vscode: {ja: "VS Codeで開く", en: "Open in VS Code"},
+  open_folder: {ja: "フォルダを開く", en: "Open folder"},
+  btn_unregister: {ja: "登録を外す", en: "Unregister"},
+  sec_git: {ja: "Git / GitHub", en: "Git / GitHub"},
+  btn_refresh: {ja: "状態を更新", en: "Refresh status"},
+  btn_commit: {ja: "コミット", en: "Commit"},
+  btn_push: {ja: "プッシュ", en: "Push"},
+  btn_pull: {ja: "プル", en: "Pull"},
+  btn_log: {ja: "ログ（最近10件）", en: "Log (last 10)"},
+  btn_gh_open: {ja: "GitHubをブラウザで開く", en: "Open GitHub in browser"},
+  sec_log: {ja: "実行ログ", en: "Run log"},
+  modal_new_title: {ja: "新規プロジェクト作成", en: "New project"},
+  label_name: {ja: "プロジェクト名（半角英数字・-・_）", en: "Project name (letters, digits, -, _)"},
+  label_template: {ja: "テンプレート", en: "Template"},
+  check_venv: {ja: "venv（.venv）を作成する", en: "Create a venv (.venv)"},
+  check_git: {ja: "git init して最初のコミットまで作る", en: "git init and make the initial commit"},
+  label_github: {ja: "GitHubリポジトリ", en: "GitHub repository"},
+  gh_none: {ja: "作らない", en: "Don't create"},
+  btn_cancel: {ja: "キャンセル", en: "Cancel"},
+  btn_create: {ja: "作成する", en: "Create"},
+  modal_commit_title: {ja: "コミット", en: "Commit"},
+  label_commit_msg: {ja: "コミットメッセージ", en: "Commit message"},
+  commit_msg_placeholder: {ja: "変更内容", en: "Describe the change"},
+  btn_commit_do: {ja: "コミットする", en: "Commit"},
+  /* 動的な表示 */
+  doctor_checking: {ja: "環境チェック中…", en: "Checking environment…"},
+  doctor_line: {ja: "環境チェック: {status}（{ok} ok / {warn} warn / {fail} fail）",
+                en: "Environment check: {status} ({ok} ok / {warn} warn / {fail} fail)"},
+  doctor_unavailable: {ja: "環境チェック: 取得できませんでした", en: "Environment check: unavailable"},
+  root_line: {ja: "作成先: {dir}", en: "Projects folder: {dir}"},
+  ver_demo: {ja: "Desktop (Tauri) — デモモード", en: "Desktop (Tauri) — demo mode"},
+  ready: {ja: "準備完了", en: "Ready"},
+  demo_ready: {ja: "ブラウザでのデザインプレビュー（デモデータ表示中）",
+              en: "Browser design preview (showing demo data)"},
+  list_no_match: {ja: "一致するプロジェクトがありません", en: "No matching projects"},
+  list_empty: {ja: "プロジェクトはまだありません", en: "No projects yet"},
+  pill_no_git: {ja: "gitなし", en: "no git"},
+  pill_folder_missing: {ja: "フォルダなし", en: "folder missing"},
+  pill_uncommitted: {ja: "未コミット {n}", en: "{n} uncommitted"},
+  chip_venv_yes: {ja: "venv あり", en: "venv available"},
+  chip_venv_no: {ja: "venv なし", en: "no venv"},
+  chip_branch: {ja: "ブランチ {branch}", en: "branch {branch}"},
+  chip_uncommitted: {ja: "未コミット {n} 件", en: "{n} uncommitted"},
+  chip_unpushed: {ja: "未プッシュ {n} 件", en: "{n} unpushed"},
+  chip_unpulled: {ja: "未プル {n} 件", en: "{n} unpulled"},
+  chip_not_git: {ja: "Git 管理外", en: "Not a git repository"},
+  detail_registered: {ja: "登録日: {date}（{origin}）", en: "Registered: {date} ({origin})"},
+  detail_last_commit: {ja: "最終コミット: {last}", en: "Last commit: {last}"},
+  detail_github: {ja: "GitHub: {remote}", en: "GitHub: {remote}"},
+  detail_no_github: {ja: "未接続", en: "Not connected"},
+  detail_git_init_hint: {ja: "「git init」ボタンで Git 管理を始められます",
+                         en: "Use the “git init” button to start using Git"},
+  detail_folder_missing: {ja: "フォルダが見つかりません（移動・削除された可能性）",
+                          en: "Folder not found (it may have been moved or deleted)"},
+  log_list_failed: {ja: "一覧の取得に失敗: {error}", en: "Failed to load the list: {error}"},
+  log_select_first: {ja: "まずプロジェクトを選んでください", en: "Select a project first"},
+  log_failed: {ja: "失敗: {error}", en: "Failed: {error}"},
+  log_success: {ja: "成功", en: "Done"},
+  log_header: {ja: "ログ: {name}", en: "Log: {name}"},
+  log_created: {ja: "作成完了", en: "Created"},
+  log_new: {ja: "新規作成: {name}", en: "Create: {name}"},
+  log_unregistered: {ja: "{name}: 登録を外しました", en: "{name}: unregistered"},
+  log_registered: {ja: "登録しました: {name}", en: "Registered: {name}"},
+  log_root_set: {ja: "作成先を {dir} にしました", en: "Set the projects folder to {dir}"},
+  log_opened: {ja: "{name}: {label} を開きました", en: "{name}: opened {label}"},
+  confirm_unregister: {ja: "{name} の登録を外しますか？\nフォルダ自体は消えません。",
+                       en: "Unregister {name}? The folder itself will not be deleted."},
+  commit_title: {ja: "コミット — {name}", en: "Commit — {name}"},
+  err_name_chars: {ja: "使えるのは半角英数字・-・_ で、先頭は英数字にしてください",
+                   en: "Use letters, digits, - or _ and start with a letter or digit"},
+  err_name_required: {ja: "プロジェクト名を入力してください", en: "Enter a project name"},
+  err_msg_required: {ja: "コミットメッセージを入力してください", en: "Enter a commit message"},
+  demo_pj: {ja: "$ pj-manager {args}  （デモモード）", en: "$ pj-manager {args} (demo mode)"},
+  demo_noop: {ja: "（デモモードでは実際には実行されません）", en: "(not actually run in demo mode)"},
+  demo_register: {ja: "（デモモード）フォルダ選択は実アプリで動きます",
+                  en: "(Demo mode) folder selection works in the real app"},
+  demo_gh_open: {ja: "（デモモード）GitHubを開く: {name}", en: "(Demo mode) open GitHub: {name}"},
+  demo_open: {ja: "（デモモード）{label}: {name}", en: "(Demo mode) {label}: {name}"},
+  demo_doctor_venv: {ja: "venv モジュールが使えます", en: "The venv module is available"},
+  demo_doctor_gh_warn: {ja: "gh CLI はありますがログインしていません",
+                        en: "gh CLI is installed but not logged in"},
+  demo_doctor_gh_hint: {ja: "ターミナルで `gh auth login` を実行してください",
+                        en: "Run `gh auth login` in a terminal"},
+  demo_doctor_root: {ja: "存在します: {dir}", en: "Exists: {dir}"},
+  demo_doctor_data: {ja: "書き込めます: {dir}", en: "Writable: {dir}"},
+  demo_doctor_registry: {ja: "{count} 件登録中（フォルダは全て存在します）",
+                         en: "{count} registered (all folders exist)"},
+  demo_doctor_config: {ja: "config.json が読めます", en: "config.json is readable"},
+  log_doctor_item: {ja: "環境チェック {level}: {name} — {detail}",
+                    en: "Environment check {level}: {name} — {detail}"},
+  log_doctor_hint: {ja: "（{hint}）", en: " ({hint})"},
+  dialog_register_title: {ja: "登録するプロジェクトのフォルダ",
+                          en: "Folder of the project to register"},
+  dialog_root_title: {ja: "新規プロジェクトの作成先フォルダ",
+                      en: "Folder for new projects"},
+};
+
+let lang = "ja";
+let lastDoctor = null;  /* 直近の doctor 結果（言語切替で表示し直す用） */
+let rootDir = "";       /* 直近の projects_root（同上） */
+
+function normalizeLang(v){ return (v === "en" || v === "ja") ? v : "ja"; }
+
+function t(key, params){
+  const entry = I18N[key] || {};
+  let text = entry[lang] || entry.ja || key;
+  if(params) for(const [k, v] of Object.entries(params)) text = text.replaceAll("{" + k + "}", v);
+  return text;
+}
+
+/* data-i18n / data-i18n-placeholder の付いた静的表示を今の言語で書き直し、
+   動的な一覧・詳細・doctor 行も描き直す（ログの既存行はそのまま）。 */
+function applyLanguage(){
+  document.documentElement.lang = lang;
+  document.getElementById("ver").textContent = isTauri ? "Desktop (Tauri)" : t("ver_demo");
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.dataset.i18n;
+    if(I18N[key]) el.textContent = t(key);
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+    const key = el.dataset.i18nPlaceholder;
+    if(I18N[key]) el.placeholder = t(key);
+  });
+  document.getElementById("lang-select").value = lang;
+  renderDoctorLine();
+  if(rootDir) document.getElementById("root-line").textContent = t("root_line", {dir: rootDir});
+  renderList();
+  const cur = projects.find(p => p.name === selected);
+  if(cur) showDetail(cur);
+  else document.getElementById("d-name").textContent = t("detail_placeholder");
+}
+
+function renderDoctorLine(){
+  const el = document.getElementById("doctor-line");
+  if(!lastDoctor){ el.textContent = t("doctor_checking"); return; }
+  const d = lastDoctor;
+  if(d.ok !== undefined){
+    const s = d.summary || {ok: 0, warn: 0, fail: 0};
+    el.textContent = t("doctor_line", {status: d.status, ok: s.ok, warn: s.warn, fail: s.fail});
+    el.classList.toggle("warn", d.status === "warn");
+    el.classList.toggle("fail", d.status === "fail");
+  } else {
+    el.textContent = t("doctor_unavailable");
+  }
+}
 
 /* ブラウザでのデザインプレビュー用デモデータ（Tauri外では自動で使われる） */
 const DEMO = {
@@ -252,21 +431,24 @@ const DEMO = {
   ]
 };
 
-const DEMO_DOCTOR = {
-  ok: true, status: "warn",
-  summary: {ok: 7, warn: 1, fail: 0},
-  checks: [
-    {name: "python", level: "ok", detail: "Python 3.12.3"},
-    {name: "venv", level: "ok", detail: "venv モジュールが使えます"},
-    {name: "git", level: "ok", detail: "git version 2.43.0"},
-    {name: "gh", level: "warn", detail: "gh CLI はありますがログインしていません",
-     hint: "ターミナルで `gh auth login` を実行してください"},
-    {name: "projects_root", level: "ok", detail: "存在します: C:\\Users\\you\\Projects"},
-    {name: "data_dir", level: "ok", detail: "書き込めます: C:\\Users\\you\\pj-manager-data"},
-    {name: "registry", level: "ok", detail: "3 件登録中（フォルダは全て存在します）"},
-    {name: "config", level: "ok", detail: "config.json が読めます"},
-  ]
-};
+/* デモ用の doctor 結果。表示言語で組み立てるため関数にしている */
+function demoDoctor(){
+  return {
+    ok: true, status: "warn",
+    summary: {ok: 7, warn: 1, fail: 0},
+    checks: [
+      {name: "python", level: "ok", detail: "Python 3.12.3"},
+      {name: "venv", level: "ok", detail: t("demo_doctor_venv")},
+      {name: "git", level: "ok", detail: "git version 2.43.0"},
+      {name: "gh", level: "warn", detail: t("demo_doctor_gh_warn"),
+       hint: t("demo_doctor_gh_hint")},
+      {name: "projects_root", level: "ok", detail: t("demo_doctor_root", {dir: "C:\\Users\\you\\Projects"})},
+      {name: "data_dir", level: "ok", detail: t("demo_doctor_data", {dir: "C:\\Users\\you\\pj-manager-data"})},
+      {name: "registry", level: "ok", detail: t("demo_doctor_registry", {count: 3})},
+      {name: "config", level: "ok", detail: t("demo_doctor_config")},
+    ]
+  };
+}
 
 let projects = [];
 let selected = null;
@@ -279,15 +461,15 @@ function log(text){
 
 async function pj(args){
   if(!isTauri){
-    log("$ pj-manager " + args.join(" ") + "  （デモモード）");
+    log(t("demo_pj", {args: args.join(" ")}));
     if(args[0] === "list") return {ok:true, projects: DEMO_EMPTY ? [] : structuredClone(DEMO.projects)};
     if(args[0] === "status"){
       const p = DEMO.projects.find(x => x.name === args[1]) || DEMO.projects[0];
       return {ok:true, project:p};
     }
     if(args[0] === "config") return {ok:true, config:{projects_root:"C:\\Users\\you\\Projects"}};
-    if(args[0] === "doctor") return structuredClone(DEMO_DOCTOR);
-    return {ok:true, output:"（デモモードでは実際には実行されません）"};
+    if(args[0] === "doctor") return demoDoctor();
+    return {ok:true, output: t("demo_noop")};
   }
   return await invoke("pj", {args});
 }
@@ -296,12 +478,12 @@ function badges(p){
   let h = "";
   if(p.git && p.git.is_git){
     h += `<span class="pill">${p.git.branch || "git"}</span>`;
-    if(p.git.dirty > 0) h += `<span class="pill warn">未コミット ${p.git.dirty}</span>`;
+    if(p.git.dirty > 0) h += `<span class="pill warn">${t("pill_uncommitted", {n: p.git.dirty})}</span>`;
     if(p.git.ahead > 0) h += `<span class="pill warn">↑${p.git.ahead}</span>`;
   } else {
-    h += `<span class="pill">gitなし</span>`;
+    h += `<span class="pill">${t("pill_no_git")}</span>`;
   }
-  if(!p.exists) h += `<span class="pill warn">フォルダなし</span>`;
+  if(!p.exists) h += `<span class="pill warn">${t("pill_folder_missing")}</span>`;
   return h;
 }
 
@@ -311,7 +493,7 @@ function renderList(){
   el.innerHTML = "";
   const shown = projects.filter(p => !q || p.name.toLowerCase().includes(q));
   if(!shown.length){
-    el.innerHTML = `<div class="empty">${projects.length ? "一致するプロジェクトがありません" : "プロジェクトはまだありません"}</div>`;
+    el.innerHTML = `<div class="empty">${projects.length ? t("list_no_match") : t("list_empty")}</div>`;
     return;
   }
   for(const p of shown){
@@ -328,30 +510,30 @@ function showDetail(p){
   document.getElementById("d-name").textContent = p.name;
   document.getElementById("d-path").textContent = p.path;
   const chips = [];
-  chips.push(`<span class="chip ${p.has_venv ? "" : "gray"}">venv ${p.has_venv ? "あり" : "なし"}</span>`);
+  chips.push(`<span class="chip ${p.has_venv ? "" : "gray"}">${p.has_venv ? t("chip_venv_yes") : t("chip_venv_no")}</span>`);
   if(p.git && p.git.is_git){
-    chips.push(`<span class="chip">ブランチ ${p.git.branch || "-"}</span>`);
-    if(p.git.dirty) chips.push(`<span class="chip warn">未コミット ${p.git.dirty} 件</span>`);
-    if(p.git.ahead) chips.push(`<span class="chip warn">未プッシュ ${p.git.ahead} 件</span>`);
-    if(p.git.behind) chips.push(`<span class="chip warn">未プル ${p.git.behind} 件</span>`);
+    chips.push(`<span class="chip">${t("chip_branch", {branch: p.git.branch || "-"})}</span>`);
+    if(p.git.dirty) chips.push(`<span class="chip warn">${t("chip_uncommitted", {n: p.git.dirty})}</span>`);
+    if(p.git.ahead) chips.push(`<span class="chip warn">${t("chip_unpushed", {n: p.git.ahead})}</span>`);
+    if(p.git.behind) chips.push(`<span class="chip warn">${t("chip_unpulled", {n: p.git.behind})}</span>`);
   } else {
-    chips.push(`<span class="chip gray">Git 管理外</span>`);
+    chips.push(`<span class="chip gray">${t("chip_not_git")}</span>`);
   }
   document.getElementById("d-chips").innerHTML = chips.join("");
-  const lines = [`登録日: ${p.created_at || "-"}（${p.origin || "-"}）`];
+  const lines = [t("detail_registered", {date: p.created_at || "-", origin: p.origin || "-"})];
   if(p.git && p.git.is_git){
-    lines.push(`最終コミット: ${p.git.last_commit || "-"}`);
-    lines.push(`GitHub: ${p.git.remote || "未接続"}`);
+    lines.push(t("detail_last_commit", {last: p.git.last_commit || "-"}));
+    lines.push(t("detail_github", {remote: p.git.remote || t("detail_no_github")}));
   } else {
-    lines.push("「git init」ボタンで Git 管理を始められます");
+    lines.push(t("detail_git_init_hint"));
   }
-  if(!p.exists) lines.push("フォルダが見つかりません（移動・削除された可能性）");
+  if(!p.exists) lines.push(t("detail_folder_missing"));
   document.getElementById("d-lines").innerHTML = lines.join("<br>");
 }
 
 async function refresh(selectName){
   const r = await pj(["list"]);
-  if(!r.ok){ log("一覧の取得に失敗: " + (r.error || "")); return; }
+  if(!r.ok){ log(t("log_list_failed", {error: r.error || ""})); return; }
   projects = r.projects;
   if(selectName) selected = selectName;
   if(!selected && projects.length) selected = projects[0].name;
@@ -372,15 +554,15 @@ function renderEmpty(){
 
 function needSelected(){
   const p = projects.find(x => x.name === selected);
-  if(!p){ log("まずプロジェクトを選んでください"); return null; }
+  if(!p){ log(t("log_select_first")); return null; }
   return p;
 }
 
 async function runAndReport(title, args){
   log("--- " + title + " ---");
   const r = await pj(args);
-  if(r.ok){ log(r.output || "成功"); }
-  else { log("失敗: " + (r.error || "")); }
+  if(r.ok){ log(r.output || t("log_success")); }
+  else { log(t("log_failed", {error: r.error || ""})); }
   await refresh(selected);
 }
 
@@ -390,7 +572,7 @@ document.getElementById("btn-refresh").onclick = () => refresh(selected);
 document.getElementById("btn-log").onclick = async () => {
   const p = needSelected(); if(!p) return;
   const r = await pj(["log", p.name]);
-  log("--- ログ: " + p.name + " ---\n" + (r.ok ? (r.log || []).join("\n") : "失敗: " + r.error));
+  log("--- " + t("log_header", {name: p.name}) + " ---\n" + (r.ok ? (r.log || []).join("\n") : t("log_failed", {error: r.error})));
 };
 document.getElementById("btn-init").onclick = () => {
   const p = needSelected(); if(p) runAndReport("git init: " + p.name, ["init", p.name]);
@@ -398,13 +580,13 @@ document.getElementById("btn-init").onclick = () => {
 document.getElementById("btn-gh-open").onclick = async () => {
   const p = needSelected(); if(!p) return;
   if(isTauri){ await invoke("open_target", {kind:"github", path:p.path}); }
-  else log("（デモモード）GitHubを開く: " + p.name);
+  else log(t("demo_gh_open", {name: p.name}));
 };
 document.getElementById("btn-unregister").onclick = async () => {
   const p = needSelected(); if(!p) return;
-  if(!confirm(`${p.name} の登録を外しますか？\nフォルダ自体は消えません。`)) return;
+  if(!confirm(t("confirm_unregister", {name: p.name}))) return;
   const r = await pj(["unregister", p.name]);
-  log(r.ok ? `${p.name}: 登録を外しました` : "失敗: " + r.error);
+  log(r.ok ? t("log_unregistered", {name: p.name}) : t("log_failed", {error: r.error}));
   selected = null;
   await refresh(null);
 };
@@ -414,8 +596,8 @@ document.querySelectorAll("[data-git]").forEach(b => {
 document.querySelectorAll("[data-open]").forEach(b => {
   b.onclick = async () => {
     const p = needSelected(); if(!p) return;
-    if(isTauri){ await invoke("open_target", {kind:b.dataset.open, path:p.path}); log(`${p.name}: ${b.textContent} を開きました`); }
-    else log(`（デモモード）${b.textContent}: ${p.name}`);
+    if(isTauri){ await invoke("open_target", {kind:b.dataset.open, path:p.path}); log(t("log_opened", {name: p.name, label: b.textContent})); }
+    else log(t("demo_open", {label: b.textContent, name: p.name}));
   };
 });
 
@@ -430,7 +612,7 @@ document.getElementById("btn-new").onclick = () => openModal("modal-new");
 document.getElementById("btn-new-empty").onclick = () => openModal("modal-new");
 document.getElementById("btn-commit").onclick = () => {
   const p = needSelected(); if(!p) return;
-  document.getElementById("c-title").textContent = "コミット — " + p.name;
+  document.getElementById("c-title").textContent = t("commit_title", {name: p.name});
   document.getElementById("c-msg").value = "";
   document.getElementById("c-msg-err").classList.remove("show");
   document.getElementById("c-msg").classList.remove("invalid");
@@ -455,8 +637,8 @@ document.getElementById("f-create").onclick = async () => {
   const name = nameEl.value.trim();
   if(!NAME_RE.test(name)){
     setFieldError(nameEl, errEl, name
-      ? "使えるのは半角英数字・-・_ で、先頭は英数字にしてください"
-      : "プロジェクト名を入力してください");
+      ? t("err_name_chars")
+      : t("err_name_required"));
     nameEl.focus();
     return;
   }
@@ -467,17 +649,17 @@ document.getElementById("f-create").onclick = async () => {
   const gh = document.getElementById("f-github").value;
   if(gh !== "none") args.push("--github", gh);
   closeModals();
-  log("--- 新規作成: " + name + " ---");
+  log("--- " + t("log_new", {name}) + " ---");
   const r = await pj(args);
-  if(r.ok){ (r.log || []).forEach(l => log(l)); log("作成完了"); await refresh(name); }
-  else log("失敗: " + (r.error || ""));
+  if(r.ok){ (r.log || []).forEach(l => log(l)); log(t("log_created")); await refresh(name); }
+  else log(t("log_failed", {error: r.error || ""}));
 };
 document.getElementById("c-do").onclick = async () => {
   const p = needSelected(); if(!p) return;
   const msgEl = document.getElementById("c-msg");
   const msg = msgEl.value.trim();
   if(!msg){
-    setFieldError(msgEl, document.getElementById("c-msg-err"), "コミットメッセージを入力してください");
+    setFieldError(msgEl, document.getElementById("c-msg-err"), t("err_msg_required"));
     msgEl.focus();
     return;
   }
@@ -486,48 +668,73 @@ document.getElementById("c-do").onclick = async () => {
 };
 
 async function registerFlow(){
-  if(!isTauri){ log("（デモモード）フォルダ選択は実アプリで動きます"); return; }
-  const dir = await dialogOpen({directory:true, multiple:false, title:"登録するプロジェクトのフォルダ"});
+  if(!isTauri){ log(t("demo_register")); return; }
+  const dir = await dialogOpen({directory:true, multiple:false, title: t("dialog_register_title")});
   if(!dir) return;
   const r = await pj(["register", dir]);
-  log(r.ok ? `登録しました: ${r.project.name}` : "失敗: " + r.error);
+  log(r.ok ? t("log_registered", {name: r.project.name}) : t("log_failed", {error: r.error}));
   await refresh(r.ok ? r.project.name : selected);
 }
 document.getElementById("btn-register").onclick = registerFlow;
 document.getElementById("btn-register-empty").onclick = registerFlow;
 document.getElementById("btn-root").onclick = async () => {
-  if(!isTauri){ log("（デモモード）フォルダ選択は実アプリで動きます"); return; }
-  const dir = await dialogOpen({directory:true, multiple:false, title:"新規プロジェクトの作成先フォルダ"});
+  if(!isTauri){ log(t("demo_register")); return; }
+  const dir = await dialogOpen({directory:true, multiple:false, title: t("dialog_root_title")});
   if(!dir) return;
   const r = await pj(["config", "set-root", dir]);
-  if(r.ok){ document.getElementById("root-line").textContent = "作成先: " + dir; log("作成先を " + dir + " にしました"); }
+  if(r.ok){ rootDir = dir; document.getElementById("root-line").textContent = t("root_line", {dir}); log(t("log_root_set", {dir})); }
 };
+
+/* 言語セレクト: Tauri では config set-language で保存し CLI / tkinter と
+   共有する。デモでは localStorage にだけ保存する。 */
+document.getElementById("lang-select").addEventListener("change", async (e) => {
+  const v = normalizeLang(e.target.value);
+  if(isTauri){
+    const r = await pj(["config", "set-language", v]);
+    if(!r.ok){ log(t("log_failed", {error: r.error || ""})); e.target.value = lang; return; }
+  } else {
+    try{ localStorage.setItem("pj_lang", v); }catch(_){}
+  }
+  lang = v;
+  applyLanguage();
+});
 
 /* 初期化 */
 (async () => {
-  document.getElementById("ver").textContent = isTauri ? "Desktop (Tauri)" : "Desktop (Tauri) — デモモード";
-  const cfg = await pj(["config", "show"]);
-  if(cfg.ok) document.getElementById("root-line").textContent = "作成先: " + cfg.config.projects_root;
+  /* 表示言語: Tauri では config.json の language を読む。デモでは
+     ?lang= が最優先、次に localStorage の pj_lang、既定は ja。 */
+  if(isTauri){
+    const cfg = await pj(["config", "show"]);
+    if(cfg.ok){
+      lang = normalizeLang(cfg.config && cfg.config.language);
+      if(cfg.config.projects_root){
+        rootDir = cfg.config.projects_root;
+        document.getElementById("root-line").textContent = t("root_line", {dir: rootDir});
+      }
+    }
+    applyLanguage();
+  } else {
+    const param = new URLSearchParams(location.search).get("lang");
+    let saved = null;
+    try{ saved = localStorage.getItem("pj_lang"); }catch(_){}
+    lang = normalizeLang(param || saved);
+    applyLanguage();
+  }
   /* 起動時チェック: doctor の結果をサイドバーに表示し、問題があればログへ */
   try{
     const d = await pj(["doctor"]);
-    const el = document.getElementById("doctor-line");
-    if(d.ok !== undefined){
-      const s = d.summary || {ok:0, warn:0, fail:0};
-      el.textContent = `環境チェック: ${d.status}（${s.ok} ok / ${s.warn} warn / ${s.fail} fail）`;
-      el.classList.toggle("warn", d.status === "warn");
-      el.classList.toggle("fail", d.status === "fail");
-      for(const c of (d.checks || [])){
-        if(c.level !== "ok") log(`環境チェック ${c.level}: ${c.name} — ${c.detail}${c.hint ? "（" + c.hint + "）" : ""}`);
-      }
-    } else {
-      el.textContent = "環境チェック: 取得できませんでした";
+    lastDoctor = d;
+    renderDoctorLine();
+    for(const c of (d.checks || [])){
+      if(c.level !== "ok") log(t("log_doctor_item", {level: c.level, name: c.name, detail: c.detail})
+        + (c.hint ? t("log_doctor_hint", {hint: c.hint}) : ""));
     }
   }catch(e){
-    document.getElementById("doctor-line").textContent = "環境チェック: 取得できませんでした";
+    lastDoctor = {};
+    renderDoctorLine();
   }
   await refresh(null);
-  log(isTauri ? "準備完了" : "ブラウザでのデザインプレビュー（デモデータ表示中）");
+  log(isTauri ? t("ready") : t("demo_ready"));
 })();
 </script>
 </body>

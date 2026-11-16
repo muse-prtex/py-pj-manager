@@ -29,8 +29,8 @@ English README: [README.md](README.md)
 表示言語は日本語が既定です。画面左下の「言語」から切り替えるか、CLI で
 `pj-manager config set-language en` を実行してください（`ja` で日本語に
 戻ります）。CLI の人間向け出力と tkinter GUI が切り替わります。`--json`
-の出力は言語で変わりません。Tauri 製デスクトップ UI は今のところ日本語
-のままで、後のセッションで追随します。
+の出力は言語で変わりません。Tauri 製デスクトップ UI も同じ設定に
+従います（サイドバー左下の「言語」から切り替えます）。
 
 ## GitHub 連携の前提
 

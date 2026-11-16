@@ -12,8 +12,9 @@ pj_manager/i18n.py — UI 文字列の辞書と表示言語の解決。
 - core.py / cli.py / app.py は `i18n.t(key, lang=..., **kw)` で
   文字列を取る。core は自分の CONFIG_FILE を渡すので、テストの
   monkey-patch でもサンドボックスの言語が使われる。
-- デスクトップ UI（desktop/ui/index.html）の文字列はまだ辞書化
-  しておらず、日本語のまま。追随は別セッションで行う。
+- デスクトップ UI（desktop/ui/index.html）の文字列も v0.15.0 で辞書化
+  した（同ファイル内の `I18N` と `t()`、`data-i18n` 属性）。
+  言語は config.json の `language` を `config set-language` で共有する。
 """
 
 from __future__ import annotations

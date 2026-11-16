@@ -52,8 +52,9 @@ Display language is Japanese by default. Switch it from the **言語 / Language*
 dropdown at the bottom-left of the window, or with
 `pj-manager config set-language en` (`ja` to switch back). The CLI's
 human-readable output and the tkinter GUI follow the setting; `--json`
-output does not change with the language. The Tauri desktop UI is still
-Japanese-only for now and follows in a later session.
+output does not change with the language. The Tauri desktop UI follows
+the same setting from its **言語 / Language** dropdown at the bottom-left
+of the sidebar.
 
 ## Notes
 

@@ -101,8 +101,8 @@ Tauri 製のデスクトップ版が [`desktop/`](../desktop/README.md) にあ�
 表示言語は日本語が既定です。GUI 左下の「言語」から切り替えるか、CLI で
 `pj-manager config set-language en` を実行してください（`ja` で日本語に
 戻ります）。CLI の人間向け出力と tkinter GUI が切り替わります。
-`--json` の出力は言語で変わりません。Tauri 製デスクトップ UI は
-今のところ日本語のままで、後のセッションで追随します。
+`--json` の出力は言語で変わりません。Tauri 製デスクトップ UI も
+サイドバー左下の「言語」から同じ設定で切り替わります。
 
 ![英語表示の GUI](images/gui-en.png)
 

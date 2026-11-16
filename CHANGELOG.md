@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.15.0 — 2026-11-16
+
+- The Tauri desktop UI now follows the display language (ja / en) like
+  the CLI and the tkinter GUI do. A **言語 / Language** dropdown sits at
+  the bottom-left of the sidebar; switching it calls
+  `config set-language`, so the choice is shared with the CLI and the
+  tkinter GUI (in the browser demo it is kept in localStorage instead,
+  and `?lang=en` opens the English view directly). All UI strings live
+  in one `I18N` dictionary inside `desktop/ui/index.html` — static text
+  via `data-i18n` / `data-i18n-placeholder`, dynamic text (badges, chips,
+  detail lines, doctor line, log lines, modal errors, confirm dialogs)
+  via `t(key, {...})`; the demo doctor data is built from the dictionary
+  so it translates too. The log's already-written lines keep the language
+  they were written in; everything new follows the current language.
+- Real use: opened the desktop UI in the browser demo, switched the
+  language with the sidebar dropdown (verified: the button text became
+  "+ New project"), and opened `?lang=en` / `?demo=empty&lang=en`
+  directly — the main view and the empty state are fully English
+  (screenshots `session13-desktop-en.png`, `session13-empty-en.png`).
+  Found and fixed while verifying: the version line under the sidebar
+  stayed Japanese after switching, because it was set once at startup;
+  `applyLanguage()` now re-renders it (guarded by a test).
+- Tests: 6 new tests in `tests/test_desktop_ui.py` (dictionary
+  completeness incl. placeholder parity, every `data-i18n` key exists,
+  no orphan dictionary keys, dynamic strings go through `t()`, version
+  line re-render). 100 tests total, all passing.
+- `day-run/tools/desktop_shot.py` now also takes the English main view
+  and the English empty state (7 shots total) and asserts the language
+  switch actually changes the button text.
+
 ## 0.14.0 — 2026-11-16
 
 - New-project dialog now opens centered over the main window. It used
