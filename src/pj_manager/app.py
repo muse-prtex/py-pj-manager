@@ -59,6 +59,22 @@ def font(size: int, weight: str = "") -> tuple:
     return (UI_FONT, size, weight) if weight else (UI_FONT, size)
 
 
+def center_geometry(parent_x: int, parent_y: int, parent_w: int, parent_h: int,
+                    width: int, height: int, screen_w: int, screen_h: int) -> str:
+    """ダイアログを親ウィンドウの中央に置く geometry 文字列を返す。
+
+    親の中央に合わせ、画面からはみ出す分だけ内側へ寄せる
+    （親が画面端にある場合や、ダイアログが画面より大きい場合も
+    左上 (0, 0) より外に出ない）。表示なしで計算だけできるよう
+    純粋関数にしてある（テストは tests/test_dialogs.py）。
+    """
+    x = parent_x + (parent_w - width) // 2
+    y = parent_y + (parent_h - height) // 2
+    x = max(0, min(x, screen_w - width))
+    y = max(0, min(y, screen_h - height))
+    return f"{width}x{height}+{x}+{y}"
+
+
 def open_terminal_with_venv(path: Path) -> None:
     """venv を有効化したターミナルを開く（なければ通常のターミナル）。"""
     if IS_WINDOWS:
@@ -453,6 +469,21 @@ class App(tk.Tk):
             self.refresh_list()
             self.log(self.tr("app_log_unregistered", name=e["name"]))
 
+    def _center_dialog(self, win: tk.Toplevel, width: int, height: int) -> None:
+        """Toplevel をメインウィンドウの中央に置く。
+
+        位置を指定しない geometry("460x380") だとウィンドウマネージャ
+        任せになり、メインウィンドウの左上へずれて開くことがあった
+        （セッション11のスクショで確認）。親の実寸を取ってから
+        center_geometry() で中央の位置を決める。
+        """
+        self.update_idletasks()
+        win.geometry(center_geometry(
+            self.winfo_x(), self.winfo_y(),
+            self.winfo_width(), self.winfo_height(),
+            width, height,
+            self.winfo_screenwidth(), self.winfo_screenheight()))
+
     # ---------- ダイアログ ----------
     def dialog_register(self) -> None:
         folder = filedialog.askdirectory(title=self.tr("app_register_dialog_title"))
@@ -477,7 +508,7 @@ class App(tk.Tk):
     def dialog_new(self) -> None:
         win = tk.Toplevel(self)
         win.title(self.tr("app_new_dialog_title"))
-        win.geometry("460x380")
+        self._center_dialog(win, 460, 380)
         win.configure(bg=APP_BG)
         win.transient(self)
         win.grab_set()

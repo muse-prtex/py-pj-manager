@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.14.0 — 2026-11-16
+
+- New-project dialog now opens centered over the main window. It used
+  to set a bare `geometry("460x380")` and leave placement to the window
+  manager, which put it offset to the top-left of the main window
+  (spotted in the session 11 screenshot). A pure `center_geometry()`
+  helper computes the centered position and clamps it inside the screen
+  (parent near a screen edge, or a dialog larger than the screen, can no
+  longer push it off-screen); `App._center_dialog()` applies it from the
+  live parent/screen sizes.
+- Real use: opened the GUI on Xvfb with the sandbox registry and pressed
+  `Ctrl+N` — the dialog opened centered over the main window
+  (screenshot `session12-dialog-centered.png`, geometry verified
+  numerically). The main window itself is unchanged.
+- Tests: 9 new tests in `tests/test_dialogs.py` (centered position,
+  screen-edge clamping, dialog larger than the screen, wiring of
+  `dialog_new` / `_center_dialog`). 94 tests total, all passing.
+- Note: the 7 screenshots in `docs/images/` still cannot be pushed with
+  the GitHub connector — `push_files` / `create_or_update_file` accept
+  UTF-8 text only (the connector guide and the live tool catalogue were
+  re-checked this session: `create_or_update_file` takes a string which
+  the server base64-encodes, so raw PNG bytes have no route through it).
+  The images are in Box as `docs-images-v0.12.0.zip` (`12_Muse/PJマネージャー`);
+  adding them via the GitHub web UI to `docs/images/` fixes the links in
+  `docs/usage.md` and the READMEs.
+
 ## 0.13.0 — 2026-11-16
 
 - Keyboard shortcuts in the tkinter GUI (reserve-improvement slot):
