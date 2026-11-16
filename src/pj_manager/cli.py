@@ -88,6 +88,7 @@ def cmd_list(args) -> int:
         f"{i['name']:<24} {i['path']}  "
         f"[{'venv' if i['has_venv'] else 'no-venv'}"
         f"{' git:' + i['git']['branch'] if i.get('git', {}).get('is_git') else ''}]"
+        f"{' [' + _t('cli_list_missing') + ']' if not i['exists'] else ''}"
         for i in infos
     ) or _t("cli_no_projects")
     return _out({"ok": True, "projects": infos}, args.json, human)
@@ -123,6 +124,11 @@ def cmd_unregister(args) -> int:
 
 def cmd_status(args) -> int:
     path = _resolve(args.target)
+    # フォルダが無い登録（ghost）は「git 管理外」ではなくフォルダ無しとして
+    # 失敗させる。check と同じ考え方で、JSON は {"ok": false, "error": ...}。
+    err = _require_dir(path)
+    if err:
+        return _fail(err, args.json)
     entry = core.find_entry(core.load_registry(), path.name)
     base = entry or {"name": path.name, "path": str(path)}
     info = _project_info({**base, "path": str(path)})

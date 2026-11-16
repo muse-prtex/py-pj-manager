@@ -130,8 +130,17 @@ class RobustCliTestCase(unittest.TestCase):
         proj.mkdir()
         self.run_cli("register", str(proj), "--json")
         proj.rmdir()
-        status = self.out_json(self.run_cli("status", "ghosty", "--json"))
-        self.assertFalse(status["project"]["exists"])
+        # status on a ghost now fails with the folder-missing message too
+        # (v0.18.0): the folder is gone, so there is no status to report —
+        # it used to exit 0 with "git: not a repository", which hid the
+        # real problem. `list --json` still reports exists: false.
+        r = self.run_cli("status", "ghosty", "--json")
+        self.assertEqual(r.returncode, 1, r.stdout)
+        err = self.out_json(r)["error"]
+        self.assertIn("フォルダがありません", err)
+        self.assertNotIn("コマンドが見つかりません", err)
+        listed = self.out_json(self.run_cli("list", "--json"))["projects"]
+        self.assertFalse(listed[0]["exists"])
         for argv in (("commit", "ghosty", "-m", "x"),
                      ("init", "ghosty")):
             r = self.run_cli(*argv, "--json")

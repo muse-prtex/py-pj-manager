@@ -380,6 +380,10 @@ STRINGS: dict[str, dict[str, str]] = {
         "ja": "git: not a repository",
         "en": "git: not a repository",
     },
+    "cli_list_missing": {
+        "ja": "missing",
+        "en": "missing",
+    },
     "cli_not_git_repo": {
         "ja": "git リポジトリではありません: {path}"
               "（先に `init` で git 初期化してください）",

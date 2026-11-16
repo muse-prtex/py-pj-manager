@@ -56,7 +56,10 @@ Contract:
   failure (hook rejection, missing git identity) still exits 1.
 - `status` output includes `git` (branch / dirty count / ahead / behind /
   last_commit) and `has_venv` — use it instead of shelling out to git for a
-  quick health check.
+  quick health check. `status` fails (exit 1, `{"ok": false, "error": ...}`)
+  when the registered folder is gone — a missing folder is not "not a git
+  repository". `list` marks such a row `[missing]` in human output; the
+  JSON still carries `exists: false`.
 - `doctor` checks the environment (Python / venv / git / gh / projects_root
   / data dir / registry / config) and returns `{"ok", "status", "checks",
   "summary"}`. `status` is `ok` / `warn` / `fail`; exit code is 1 only when

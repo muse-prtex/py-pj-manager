@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.18.0 — 2026-11-16
+
+- `status` on a registered project whose folder is gone (a "ghost") no
+  longer reports success. It used to exit 0 with "git: not a repository"
+  — misleading, because the folder does not exist at all; it is not a
+  non-git folder. `status` now fails (exit 1) with the localized
+  folder-missing message ("フォルダがありません: …" / "Folder not found:
+  …"), in human output and as `{"ok": false, "error": ...}` with
+  `--json` — the same message the git commands already use, and the same
+  idea as `check`, where a missing folder makes the whole result not-ok.
+  `list` now marks a ghost row `[missing]` in human output, so a ghost no
+  longer looks identical to a live project; the JSON is unchanged and
+  still carries `exists: false`.
+- Real use: in the sandbox, created ghost-demo and live-demo, deleted
+  ghost-demo's folder, and ran `status` / `list` in Japanese, in English
+  and with `--json` — the ghost fails with exit 1 in all three forms, the
+  live project still reports normally (screenshot `session16-status.png`).
+- Tests: 7 new tests in `tests/test_status_missing.py` (ghost fails in
+  ja/en/JSON, live still ok, unregistered missing path keeps the old
+  "project not found" error, `list` marks the ghost, JSON keeps
+  `exists: false`); the old robustness test that asserted the old
+  `status`-on-ghost behaviour was updated to the new one. 116 tests
+  total, all passing.
+- `day-run/tools/session16-status.sh` — the real-use demo for this
+  session (create two projects, delete one folder, run `status` / `list`
+  in ja/en/JSON); run it through `term_shot.py` to re-take the
+  screenshot.
+- Note: the 7 screenshots in `docs/images/` still cannot be pushed with
+  the GitHub connector — `push_files` / `create_or_update_file` accept
+  UTF-8 text only. The images are in Box as `docs-images-v0.12.0.zip`
+  (`12_Muse/PJマネージャー`); adding them via the GitHub web UI to
+  `docs/images/` fixes the links in `docs/usage.md` and the READMEs.
+
 ## 0.17.0 — 2026-11-16
 
 - Committing a clean tree is no longer a failure. `commit` used to exit 1
