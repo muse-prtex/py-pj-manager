@@ -11,11 +11,14 @@ git & GitHub). There are three faces over one core:
 
 ## The CLI
 
-Run from the repository root (or anywhere, with `PYTHONPATH=<repo>/src`):
+Run from the repository root (or anywhere, with `PYTHONPATH=<repo>/src`),
+or install it once (`pip install -e .` from the repo root, see
+`pyproject.toml`) and call it as `pj-manager` — same contract, no
+`PYTHONPATH` needed:
 
 ```
-python -m pj_manager.cli list --json
-python -m pj_manager.cli create my-app [--root DIR] [--no-venv] [--no-git] [--github none|private|public] --json
+pj-manager list --json
+pj-manager create my-app [--root DIR] [--no-venv] [--no-git] [--github none|private|public] --json
 python -m pj_manager.cli register PATH --json
 python -m pj_manager.cli unregister NAME --json
 python -m pj_manager.cli status NAME_OR_PATH --json

@@ -65,6 +65,7 @@ src/pj_manager/
     cli.py         command-line face for scripts and AI agents (AGENTS.md)
     __main__.py    enables `python -m pj_manager`
 tests/             unittest suite for core.py (standard library only)
+pyproject.toml     packaging (`pip install -e .` installs the `pj-manager` command)
 pjman.py           compatibility launcher (`py pjman.py` still works)
 run.bat            launcher (sets PYTHONPATH and runs the package)
 ```
@@ -81,15 +82,24 @@ a zero-dependency fallback (`run.bat`).
 
 ## CLI for scripts and AI agents
 
-Everything the GUI does is also available headlessly:
+Everything the GUI does is also available headlessly. Install it once
+from a clone and the `pj-manager` command is on your PATH (still no
+dependencies beyond the standard library):
+
+```powershell
+pip install -e .        # or `pip install .` for a plain install
+pj-manager list --json
+pj-manager create my-app --json
+pj-manager status my-app --json
+pj-manager commit my-app -m "wip" --json
+pj-manager doctor --json
+```
+
+Without installing, the same CLI runs with `PYTHONPATH=src`:
 
 ```powershell
 py -m pj_manager.cli list --json
 py -m pj_manager.cli create my-app --json
-py -m pj_manager.cli status my-app --json
-py -m pj_manager.cli commit my-app -m "wip" --json
-py -m pj_manager.cli doctor --json
-```
 
 With `--json`, stdout is a single JSON object and the exit code is 0/1 —
 no prompts, ever. Agents: read [AGENTS.md](AGENTS.md) for the full contract,

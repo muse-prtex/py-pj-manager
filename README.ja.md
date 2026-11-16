@@ -58,15 +58,24 @@ CLI 経由で Python コアを呼ぶだけなので、どの画面からでも�
 
 ## スクリプト／AIエージェント用 CLI
 
-GUI の操作はすべてコマンドラインからも実行できます：
+GUI の操作はすべてコマンドラインからも実行できます。クローンした
+フォルダで一度 `pip install -e .` すれば `pj-manager` コマンドが
+使えるようになります（追加の依存はなく、Python標準機能だけです）：
+
+```
+pip install -e .        # または `pip install .`（通常インストール）
+pj-manager list --json
+pj-manager create my-app --json
+pj-manager status my-app --json
+pj-manager commit my-app -m "wip" --json
+pj-manager doctor --json
+```
+
+インストールしない場合は、同じ CLI を `PYTHONPATH=src` で実行できます：
 
 ```
 py -m pj_manager.cli list --json
 py -m pj_manager.cli create my-app --json
-py -m pj_manager.cli status my-app --json
-py -m pj_manager.cli commit my-app -m "wip" --json
-py -m pj_manager.cli doctor --json
-```
 
 `--json` を付けると標準出力が JSON 1オブジェクトになり、終了コードは
 0（成功）/1（失敗）。対話プロンプトはありません。エージェント向けの

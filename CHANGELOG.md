@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.9.0 — 2026-11-16
+
+- Packaging: added `pyproject.toml`, so the tool installs with
+  `pip install -e .` (or `pip install .`) and provides the `pj-manager`
+  console script — no `PYTHONPATH` juggling needed. The Python core
+  stays standard-library only (`dependencies = []`, `requires-python
+  >= 3.10`); the version is read from `pj_manager.__version__`
+  (single source of truth). `run.bat` / `py pjman.py` still work
+  without installing.
+- Real use: installed into a fresh venv and actually used the
+  `pj-manager` command (create with venv + git init + initial commit,
+  status, doctor, list). A plain `pip install .` into a second venv
+  was also verified — the package lands in site-packages and reads
+  the same registry. Caught by the real install: the first draft
+  forgot `dynamic = ["version"]` in `[project]`, which setuptools
+  rejects; fixed, and a test now pins that declaration.
+- Tests: 7 new tests in `tests/test_pyproject.py` (metadata: build
+  system, name, zero dependencies, version wiring, console-script
+  entry point, src layout; plus entry-point runs as a subprocess).
+  44 tests total, all passing.
+
 ## 0.8.0 — 2026-11-16
 
 - Desktop UI polish (verified by actually opening the modals and the empty

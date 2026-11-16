@@ -1,0 +1,32 @@
+# pyproject.toml — packaging for py-pj-manager.
+#
+# `pip install -e .` (or `pip install .`) from a clone installs the CLI
+# as the `pj-manager` console script — no PYTHONPATH juggling needed.
+# The Python core stays standard-library only: no dependencies here,
+# and the GUI still works by double-clicking run.bat without installing.
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "py-pj-manager"
+dynamic = ["version"]
+description = "A tiny Windows GUI to manage your Python projects in one place"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+pj-manager = "pj_manager.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/muse-prtex/py-pj-manager"
+Repository = "https://github.com/muse-prtex/py-pj-manager"
+
+[tool.setuptools.dynamic]
+version = { attr = "pj_manager.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
