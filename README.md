@@ -42,6 +42,13 @@ New projects are created under `~/Projects` by default; change it from
 “作成先フォルダの設定” (creation folder setting) at the bottom-left of the
 window. The setting is stored in `config.json`.
 
+Display language is Japanese by default. Switch it from the **言語 / Language**
+dropdown at the bottom-left of the window, or with
+`pj-manager config set-language en` (`ja` to switch back). The CLI's
+human-readable output and the tkinter GUI follow the setting; `--json`
+output does not change with the language. The Tauri desktop UI is still
+Japanese-only for now and follows in a later session.
+
 ## Notes
 
 - If the initial commit is skipped, git identity is the usual cause. Set it once:
@@ -63,6 +70,7 @@ src/pj_manager/
     app.py         the GUI (tkinter)
     core.py        project registry, creation, git/GitHub logic (GUI-free)
     cli.py         command-line face for scripts and AI agents (AGENTS.md)
+    i18n.py        UI string dictionaries (ja/en) and language resolution
     __main__.py    enables `python -m pj_manager`
 tests/             unittest suite for core.py (standard library only)
 pyproject.toml     packaging (`pip install -e .` installs the `pj-manager` command)

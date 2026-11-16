@@ -18,6 +18,13 @@ Examples:
   python -m pj_manager.cli init my-app --json
   python -m pj_manager.cli doctor --json
   python -m pj_manager.cli check --json
+  python -m pj_manager.cli config show --json
+  python -m pj_manager.cli config set-root DIR --json
+  python -m pj_manager.cli config set-language ja|en --json
+
+Display language: config.json `language` ("ja" default / "en").
+Human-readable output and error messages follow it; --json output
+(keys and values) does not change with the language.
 """
 
 from __future__ import annotations
@@ -27,7 +34,14 @@ import json
 import sys
 from pathlib import Path
 
-from pj_manager import core
+from pj_manager import core, i18n
+
+# 表示言語。main() が config.json から決めて全ハンドラで使う。
+_LANG = i18n.DEFAULT_LANGUAGE
+
+
+def _t(key: str, **kwargs) -> str:
+    return i18n.t(key, lang=_LANG, **kwargs)
 
 
 def _out(obj: dict, as_json: bool, human: str | None = None) -> int:
@@ -55,7 +69,7 @@ def _resolve(target: str) -> Path:
     entry = core.find_entry(core.load_registry(), target)
     if entry:
         return Path(entry["path"])
-    raise ValueError(f"プロジェクトが見つかりません: {target}")
+    raise ValueError(_t("cli_project_not_found", target=target))
 
 
 def _project_info(entry: dict) -> dict:
@@ -75,7 +89,7 @@ def cmd_list(args) -> int:
         f"[{'venv' if i['has_venv'] else 'no-venv'}"
         f"{' git:' + i['git']['branch'] if i.get('git', {}).get('is_git') else ''}]"
         for i in infos
-    ) or "(no projects registered)"
+    ) or _t("cli_no_projects")
     return _out({"ok": True, "projects": infos}, args.json, human)
 
 
@@ -90,21 +104,21 @@ def cmd_create(args) -> int:
     return _out(
         {"ok": True, "project": _project_info(entry), "log": logs},
         args.json,
-        f"created: {entry['path']}",
+        _t("cli_created", path=entry["path"]),
     )
 
 
 def cmd_register(args) -> int:
     entry = core.register_existing(args.path)
     return _out({"ok": True, "project": _project_info(entry)}, args.json,
-                f"registered: {entry['name']} ({entry['path']})")
+                _t("cli_registered", name=entry["name"], path=entry["path"]))
 
 
 def cmd_unregister(args) -> int:
     if not core.unregister(args.name):
-        return _fail(f"登録がありません: {args.name}", args.json)
+        return _fail(_t("cli_no_registration", name=args.name), args.json)
     return _out({"ok": True, "unregistered": args.name}, args.json,
-                f"unregistered: {args.name} (folder kept)")
+                _t("cli_unregistered", name=args.name))
 
 
 def cmd_status(args) -> int:
@@ -115,18 +129,19 @@ def cmd_status(args) -> int:
     git = info.get("git", {})
     human = (
         f"{info['name']}: {info['path']}\n"
-        f"  venv: {'yes' if info['has_venv'] else 'no'}\n"
-        + (f"  git: branch={git.get('branch', '')} dirty={git.get('dirty', 0)} "
-           f"ahead={git.get('ahead', 0)} behind={git.get('behind', 0)}\n"
-           f"  last: {git.get('last_commit', '')}" if git.get("is_git")
-           else "  git: not a repository")
+        "  " + _t("cli_status_venv", value="yes" if info["has_venv"] else "no") + "\n"
+        + ("  " + _t("cli_status_git", branch=git.get("branch", ""),
+                      dirty=git.get("dirty", 0), ahead=git.get("ahead", 0),
+                      behind=git.get("behind", 0)) + "\n"
+           + "  " + _t("cli_status_last", last=git.get("last_commit", ""))
+           if git.get("is_git") else "  " + _t("cli_status_not_git"))
     )
     return _out({"ok": True, "project": info}, args.json, human)
 
 
 def _require_dir(path: Path) -> str | None:
     if not path.is_dir():
-        return f"フォルダがありません: {path}"
+        return _t("folder_missing", path=path)
     return None
 
 
@@ -135,8 +150,7 @@ def _require_git_repo(path: Path) -> str | None:
     if err:
         return err
     if not core.is_git_repo(path):
-        return (f"git リポジトリではありません: {path}"
-                "（先に `init` で git 初期化してください）")
+        return _t("cli_not_git_repo", path=path)
     return None
 
 
@@ -147,7 +161,7 @@ def cmd_commit(args) -> int:
         return _fail(err, args.json)
     ok, out = core.commit_all(path, args.message)
     if not ok:
-        return _fail(out or "commit failed", args.json)
+        return _fail(out or _t("cli_commit_failed"), args.json)
     return _out({"ok": True, "output": out}, args.json, out)
 
 
@@ -159,7 +173,7 @@ def cmd_git_op(op: str):
             return _fail(err, args.json)
         ok, out = core.git_op(path, op)
         if not ok:
-            return _fail(out or f"git {op} failed", args.json)
+            return _fail(out or _t("cli_git_op_failed", op=op), args.json)
         return _out({"ok": True, "output": out}, args.json, out)
     return run
 
@@ -172,7 +186,7 @@ def cmd_log(args) -> int:
     ok, out = core.git_op(
         path, "log", f"-{args.n}", "--pretty=%h %ad %s", "--date=short")
     if not ok:
-        return _fail(out or "git log failed", args.json)
+        return _fail(out or _t("cli_log_failed"), args.json)
     lines = [ln for ln in out.splitlines() if ln.strip()]
     return _out({"ok": True, "log": lines}, args.json, "\n".join(lines))
 
@@ -183,11 +197,11 @@ def cmd_init(args) -> int:
     if err:
         return _fail(err, args.json)
     if core.is_git_repo(path):
-        return _out({"ok": True, "output": "already a git repository"},
-                    args.json, "already a git repository")
+        return _out({"ok": True, "output": _t("cli_already_git")},
+                    args.json, _t("cli_already_git"))
     ok, out = core.git_op(path, "init", "-b", "main")
     if not ok:
-        return _fail(out or "git init failed", args.json)
+        return _fail(out or _t("cli_init_failed"), args.json)
     return _out({"ok": True, "output": out}, args.json, out)
 
 
@@ -209,11 +223,10 @@ def cmd_check(args) -> int:
                      f"{'venv' if p['has_venv'] else 'no-venv'} "
                      f"{git_s}{issues}")
     s = result["summary"]
-    lines.append(f"check: {s['total']} projects "
-                 f"({s['ok']} ok / {s['attention']} attention / "
-                 f"{s['missing']} missing)")
+    lines.append(_t("cli_check_summary", total=s["total"], ok=s["ok"],
+                    attention=s["attention"], missing=s["missing"]))
     _out(result, args.json,
-         "\n".join(lines) if lines else "(no projects registered)")
+         "\n".join(lines) if lines else _t("cli_no_projects"))
     return 0 if result["ok"] else 1
 
 
@@ -227,8 +240,8 @@ def cmd_doctor(args) -> int:
             line += f" — {c['hint']}"
         lines.append(line)
     s = result["summary"]
-    lines.append(f"status: {result['status']} "
-                 f"({s['ok']} ok / {s['warn']} warn / {s['fail']} fail)")
+    lines.append(_t("cli_doctor_status", status=result["status"],
+                    ok=s["ok"], warn=s["warn"], fail=s["fail"]))
     _out({"ok": result["ok"], "status": result["status"],
           "checks": result["checks"], "summary": s},
          args.json, "\n".join(lines))
@@ -244,8 +257,17 @@ def cmd_config(args) -> int:
         cfg["projects_root"] = str(Path(args.value).expanduser())
         core.save_config(cfg)
         return _out({"ok": True, "config": cfg}, args.json,
-                    f"projects_root: {cfg['projects_root']}")
-    return _fail(f"unknown config action: {args.action}", args.json)
+                    _t("cli_config_root_set", value=cfg["projects_root"]))
+    if args.action == "set-language":
+        value = (args.value or "").strip().lower()
+        if value not in i18n.LANGUAGES:
+            return _fail(_t("cli_invalid_language", value=args.value or ""),
+                         args.json)
+        cfg["language"] = value
+        core.save_config(cfg)
+        return _out({"ok": True, "config": cfg}, args.json,
+                    _t("cli_set_language", value=cfg["language"]))
+    return _fail(_t("cli_unknown_config_action", action=args.action), args.json)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -291,8 +313,9 @@ def build_parser() -> argparse.ArgumentParser:
     lg.add_argument("-n", type=int, default=10)
 
     cf = sub.add_parser("config", help="show or change settings")
-    cf.add_argument("action", choices=["show", "set-root"])
-    cf.add_argument("value", nargs="?", help="folder path for set-root")
+    cf.add_argument("action", choices=["show", "set-root", "set-language"])
+    cf.add_argument("value", nargs="?",
+                    help="folder path for set-root, ja|en for set-language")
 
     sub.add_parser("doctor", help="check environment health "
                    "(python / git / gh / paths / registry)")
@@ -326,6 +349,8 @@ def main(argv: list[str] | None = None) -> int:
     argv = [a for a in argv if a != "--json"]
     args = build_parser().parse_args(argv)
     args.json = as_json
+    global _LANG
+    _LANG = i18n.get_language(core.CONFIG_FILE)
     try:
         return HANDLERS[args.command](args)
     except ValueError as e:

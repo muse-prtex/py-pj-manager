@@ -19,7 +19,7 @@ from pathlib import Path
 import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog, ttk
 
-from pj_manager import core
+from pj_manager import core, i18n
 
 IS_WINDOWS = os.name == "nt"
 
@@ -68,23 +68,59 @@ def open_in_explorer(path: Path) -> None:
 def open_in_vscode(path: Path) -> tuple[bool, str]:
     import shutil
     if not shutil.which("code"):
-        return False, "VS Code の `code` コマンドが見つかりません"
+        return False, i18n.t("app_vscode_not_found")
     subprocess.Popen(["code", str(path)])
-    return True, "VS Code で開きました"
+    return True, i18n.t("app_vscode_opened")
 
 
 class App(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
-        self.title("PJマネージャー — プロジェクト総合管理")
+        self.config = core.load_config()
+        self.lang = i18n.normalize_language(self.config.get("language"))
+        self.title(self.tr("app_title"))
         self.geometry("1080x660")
         self.minsize(1020, 620)
         self.configure(bg=APP_BG)
         self.entries: list[dict] = core.load_registry()
-        self.config = core.load_config()
         self._setup_styles()
         self._build()
         self.refresh_list()
+
+    def tr(self, key: str, **kwargs) -> str:
+        """この画面の表示文字列（辞書 i18n.STRINGS から取る）。"""
+        return i18n.t(key, lang=self.lang, **kwargs)
+
+    def set_language(self, lang: str) -> None:
+        """言語を切り替え、config に保存して画面を作り直す。"""
+        lang = i18n.normalize_language(lang)
+        if lang == self.lang:
+            return
+        self.lang = lang
+        self.config["language"] = lang
+        core.save_config(self.config)
+        self._rebuild()
+
+    def _rebuild(self) -> None:
+        """全ウィジェットを捨てて _build から作り直す（言語切替用）。
+
+        切替前に選んでいたプロジェクトがあれば、作り直し後に
+        選び直して詳細も出し直す（言語を変えただけで表示が
+        プレースホルダに戻らないようにするため）。
+        """
+        selected = self.selected()
+        selected_name = selected["name"] if selected else None
+        for w in self.winfo_children():
+            w.destroy()
+        self.title(self.tr("app_title"))
+        self._build()
+        self.refresh_list()
+        if selected_name:
+            for i, e in enumerate(self.entries):
+                if e["name"] == selected_name:
+                    self.listbox.selection_set(i)
+                    self.show_detail()
+                    break
 
     def _setup_styles(self) -> None:
         st = ttk.Style(self)
@@ -131,9 +167,9 @@ class App(tk.Tk):
         side.pack_propagate(False)
         head = tk.Frame(side, bg=SIDE_BG)
         head.pack(fill="x", padx=16, pady=(16, 4))
-        ttk.Label(head, text="PJマネージャー", style="SideTitle.TLabel").pack(anchor="w")
+        ttk.Label(head, text=self.tr("app_sidebar_title"), style="SideTitle.TLabel").pack(anchor="w")
         ttk.Label(head, text="PROJECT MANAGER", style="SideSub.TLabel").pack(anchor="w", pady=(1, 0))
-        ttk.Label(side, text="プロジェクト", style="SideSection.TLabel").pack(
+        ttk.Label(side, text=self.tr("app_section_projects"), style="SideSection.TLabel").pack(
             anchor="w", padx=16, pady=(14, 4))
         self.listbox = tk.Listbox(
             side, width=34, height=10,
@@ -145,14 +181,25 @@ class App(tk.Tk):
         self.listbox.bind("<<ListboxSelect>>", lambda _e: self.show_detail())
         btns = tk.Frame(side, bg=SIDE_BG)
         btns.pack(fill="x", padx=12, pady=12)
-        ttk.Button(btns, text="＋ 新規プロジェクト作成", style="Accent.TButton",
+        ttk.Button(btns, text=self.tr("app_btn_new"), style="Accent.TButton",
                    command=self.dialog_new).pack(fill="x", pady=(0, 6))
-        ttk.Button(btns, text="既存フォルダを登録", style="Side.TButton",
+        ttk.Button(btns, text=self.tr("app_btn_register"), style="Side.TButton",
                    command=self.dialog_register).pack(fill="x", pady=(0, 6))
-        ttk.Button(btns, text="登録を外す", style="Side.TButton",
+        ttk.Button(btns, text=self.tr("app_btn_unregister"), style="Side.TButton",
                    command=self.do_unregister).pack(fill="x", pady=(0, 6))
-        ttk.Button(btns, text="作成先フォルダの設定", style="Side.TButton",
+        ttk.Button(btns, text=self.tr("app_btn_config"), style="Side.TButton",
                    command=self.dialog_config).pack(fill="x")
+        lang_row = tk.Frame(side, bg=SIDE_BG)
+        lang_row.pack(fill="x", padx=12, pady=(0, 12))
+        ttk.Label(lang_row, text=self.tr("app_language_label"),
+                  style="SideSub.TLabel").pack(side="left")
+        self.lang_combo = ttk.Combobox(
+            lang_row, values=["日本語", "English"], state="readonly", width=10)
+        self.lang_combo.set("日本語" if self.lang == "ja" else "English")
+        self.lang_combo.pack(side="right")
+        self.lang_combo.bind("<<ComboboxSelected>>",
+                             lambda _e: self.set_language(
+                                 "ja" if self.lang_combo.get() == "日本語" else "en"))
         from pj_manager import __version__
         ttk.Label(side, text=f"v{__version__}", style="SideSub.TLabel").pack(
             anchor="w", padx=16, pady=(0, 10))
@@ -163,7 +210,7 @@ class App(tk.Tk):
 
         card = ttk.Frame(right, style="Card.TFrame", padding=14)
         card.pack(fill="x")
-        self.detail = tk.Label(card, text="左の一覧からプロジェクトを選んでください",
+        self.detail = tk.Label(card, text=self.tr("app_detail_placeholder"),
                                justify="left", anchor="nw", bg=CARD_BG, fg=TEXT,
                                font=font(10))
         self.detail.pack(fill="x")
@@ -178,25 +225,25 @@ class App(tk.Tk):
                 ttk.Button(row, text=text_, style=style, command=cmd).pack(
                     side="left", padx=(0, 6))
 
-        section("開く", [
-            ("ターミナルで開く（venv有効化）", self.do_open_terminal, "Accent.TButton"),
-            ("VS Codeで開く", self.do_open_vscode, "TButton"),
-            ("フォルダを開く", self.do_open_folder, "TButton"),
+        section(self.tr("app_section_open"), [
+            (self.tr("app_btn_terminal"), self.do_open_terminal, "Accent.TButton"),
+            (self.tr("app_btn_vscode"), self.do_open_vscode, "TButton"),
+            (self.tr("app_btn_folder"), self.do_open_folder, "TButton"),
         ])
         section("Git", [
-            ("状態を更新", self.show_detail, "TButton"),
-            ("コミット", self.do_commit, "TButton"),
-            ("プッシュ", lambda: self.do_git_op("push"), "TButton"),
-            ("プル", lambda: self.do_git_op("pull"), "TButton"),
-            ("ログ（最近10件）", self.do_log, "TButton"),
-            ("git init", self.do_git_init, "TButton"),
+            (self.tr("app_btn_refresh"), self.show_detail, "TButton"),
+            (self.tr("app_btn_commit"), self.do_commit, "TButton"),
+            (self.tr("app_btn_push"), lambda: self.do_git_op("push"), "TButton"),
+            (self.tr("app_btn_pull"), lambda: self.do_git_op("pull"), "TButton"),
+            (self.tr("app_btn_log"), self.do_log, "TButton"),
+            (self.tr("app_btn_git_init"), self.do_git_init, "TButton"),
         ])
         section("GitHub", [
-            ("リポジトリを作成", self.do_github_create, "TButton"),
-            ("ブラウザで開く", self.do_github_open, "TButton"),
+            (self.tr("app_btn_gh_create"), self.do_github_create, "TButton"),
+            (self.tr("app_btn_gh_open"), self.do_github_open, "TButton"),
         ])
 
-        ttk.Label(right, text="実行ログ").pack(anchor="w", pady=(12, 4))
+        ttk.Label(right, text=self.tr("app_log_label")).pack(anchor="w", pady=(12, 4))
         self.logbox = tk.Text(right, height=14, wrap="word",
                               bg=LOG_BG, fg=LOG_FG, relief="flat", borderwidth=0,
                               highlightthickness=0, font=(MONO_FONT, 9),
@@ -219,7 +266,7 @@ class App(tk.Tk):
         self.entries = core.load_registry()
         self.listbox.delete(0, "end")
         for e in self.entries:
-            mark = "" if Path(e["path"]).exists() else "（フォルダなし）"
+            mark = "" if Path(e["path"]).exists() else self.tr("app_folder_missing_mark")
             self.listbox.insert("end", f'{e["name"]}{mark}')
 
     def run_async(self, title: str, fn) -> None:
@@ -231,7 +278,7 @@ class App(tk.Tk):
                 if out:
                     self.after(0, self.log, str(out))
             except Exception as ex:  # GUIなので落とさず表示する
-                self.after(0, self.log, f"エラー: {ex}")
+                self.after(0, self.log, self.tr("app_log_error", error=ex))
             self.after(0, self.refresh_list)
             self.after(0, self.show_detail)
         threading.Thread(target=worker, daemon=True).start()
@@ -243,36 +290,46 @@ class App(tk.Tk):
             return
         p = Path(e["path"])
         if not p.exists():
-            self.detail.config(text=f'{e["name"]}\n場所: {p}\nフォルダが見つかりません（移動・削除された可能性）')
+            self.detail.config(text="\n".join([
+                self.tr("app_detail_name", name=e["name"]),
+                self.tr("app_detail_location", path=p),
+                self.tr("app_detail_folder_missing")]))
             return
         st = core.git_status(p)
         lines = [
-            f'名前: {e["name"]}',
-            f'場所: {p}',
-            f'登録日: {e.get("created_at", "-")}（{e.get("origin", "-")}）',
-            f'venv: {"あり" if core.has_venv(p) else "なし"}',
+            self.tr("app_detail_name", name=e["name"]),
+            self.tr("app_detail_location", path=p),
+            self.tr("app_detail_registered", date=e.get("created_at", "-"),
+                    origin=e.get("origin", "-")),
+            self.tr("app_detail_venv",
+                    value="yes" if core.has_venv(p) else "no"),
         ]
         if st["is_git"]:
-            lines.append(f'Git: ブランチ {st["branch"] or "-"} / 未コミット {st["dirty"]} 件'
-                         f' / 未プッシュ {st["ahead"]} 件 / 未プル {st["behind"]} 件')
-            lines.append(f'最終コミット: {st["last_commit"] or "-"}')
-            lines.append(f'GitHub: {core.github_web_url(p) or st["remote"] or "未接続"}')
+            lines.append(self.tr("app_detail_git", branch=st["branch"] or "-",
+                                 dirty=st["dirty"], ahead=st["ahead"],
+                                 behind=st["behind"]))
+            lines.append(self.tr("app_detail_last_commit",
+                                 last=st["last_commit"] or "-"))
+            lines.append(self.tr("app_detail_github",
+                                 url=core.github_web_url(p) or st["remote"]
+                                 or self.tr("app_detail_not_connected")))
         else:
-            lines.append("Git: 管理外（「git init」ボタンで開始できます）")
+            lines.append(self.tr("app_detail_not_git"))
         self.detail.config(text="\n".join(lines))
 
     # ---------- 操作 ----------
     def need_selected(self) -> dict | None:
         e = self.selected()
         if not e:
-            messagebox.showinfo("未選択", "まず左の一覧からプロジェクトを選んでください")
+            messagebox.showinfo(self.tr("app_msg_not_selected_title"),
+                                self.tr("app_msg_not_selected"))
         return e
 
     def do_open_terminal(self) -> None:
         e = self.need_selected()
         if e:
             open_terminal_with_venv(Path(e["path"]))
-            self.log(f'{e["name"]}: ターミナルを開きました')
+            self.log(self.tr("app_log_terminal_opened", name=e["name"]))
 
     def do_open_folder(self) -> None:
         e = self.need_selected()
@@ -292,16 +349,17 @@ class App(tk.Tk):
         self.run_async(f"{op}: {e['name']}",
                        lambda log: self._git_result(core.git_op(e["path"], op)))
 
-    @staticmethod
-    def _git_result(result: tuple[bool, str]) -> str:
+    def _git_result(self, result: tuple[bool, str]) -> str:
         ok, out = result
-        return ("成功\n" if ok else "失敗\n") + (out or "（出力なし）")
+        status = self.tr("app_git_success") if ok else self.tr("app_git_failed")
+        return status + "\n" + (out or self.tr("app_git_no_output"))
 
     def do_commit(self) -> None:
         e = self.need_selected()
         if not e:
             return
-        msg = simpledialog.askstring("コミット", "コミットメッセージ:", parent=self)
+        msg = simpledialog.askstring(self.tr("app_commit_title"),
+                                     self.tr("app_commit_prompt"), parent=self)
         if not msg:
             return
         self.run_async(f"commit: {e['name']}",
@@ -312,14 +370,15 @@ class App(tk.Tk):
         if not e:
             return
         ok, out = core.git_op(e["path"], "log", "--oneline", "-10")
-        self.log("--- ログ ---\n" + (out if ok else f"失敗: {out}"))
+        self.log(self.tr("app_log_header") + "\n"
+                 + (out if ok else self.tr("app_log_failed", out=out)))
 
     def do_git_init(self) -> None:
         e = self.need_selected()
         if not e:
             return
         if core.is_git_repo(Path(e["path"])):
-            self.log("すでに git 管理下です")
+            self.log(self.tr("app_log_already_git"))
             return
         self.run_async(f"git init: {e['name']}",
                        lambda log: self._git_result(core.git_op(e["path"], "init", "-b", "main")))
@@ -328,11 +387,10 @@ class App(tk.Tk):
         e = self.need_selected()
         if not e:
             return
-        if not messagebox.askyesno("GitHubリポジトリ作成",
-                                   f'{e["name"]} のGitHubリポジトリを Private で作成します。よろしいですか？\n'
-                                   "（Publicにしたい場合は README のコマンド例をご覧ください）"):
+        if not messagebox.askyesno(self.tr("app_gh_create_title"),
+                                   self.tr("app_gh_create_body", name=e["name"])):
             return
-        self.run_async(f"GitHub作成: {e['name']}",
+        self.run_async(self.tr("app_gh_create_log", name=e["name"]),
                        lambda log: self._git_result(core.github_create(e["path"], "private", True)))
 
     def do_github_open(self) -> None:
@@ -343,65 +401,66 @@ class App(tk.Tk):
         if url:
             webbrowser.open(url)
         else:
-            self.log("GitHub の URL が分かりません（origin 未設定か、GitHub以外のリモートです）")
+            self.log(self.tr("app_gh_url_unknown"))
 
     def do_unregister(self) -> None:
         e = self.need_selected()
         if not e:
             return
-        if messagebox.askyesno("登録を外す",
-                               f'{e["name"]} の登録を外しますか？\nフォルダ自体は消えません。'):
+        if messagebox.askyesno(self.tr("app_unregister_title"),
+                               self.tr("app_unregister_body", name=e["name"])):
             core.unregister(e["name"], self.entries)
             self.entries = core.load_registry()
             self.refresh_list()
-            self.log(f'{e["name"]}: 登録を外しました')
+            self.log(self.tr("app_log_unregistered", name=e["name"]))
 
     # ---------- ダイアログ ----------
     def dialog_register(self) -> None:
-        folder = filedialog.askdirectory(title="登録するプロジェクトのフォルダ")
+        folder = filedialog.askdirectory(title=self.tr("app_register_dialog_title"))
         if not folder:
             return
         try:
             entry = core.register_existing(folder)
-            self.log(f'登録しました: {entry["name"]}')
+            self.log(self.tr("app_log_registered", name=entry["name"]))
         except ValueError as ex:
-            messagebox.showerror("登録できません", str(ex))
+            messagebox.showerror(self.tr("app_register_error_title"), str(ex))
         self.refresh_list()
 
     def dialog_config(self) -> None:
         folder = filedialog.askdirectory(
-            title="新規プロジェクトの作成先フォルダ",
+            title=self.tr("app_config_dialog_title"),
             initialdir=self.config.get("projects_root", ""))
         if folder:
             self.config["projects_root"] = folder
             core.save_config(self.config)
-            self.log(f"作成先フォルダを {folder} にしました")
+            self.log(self.tr("app_log_root_set", folder=folder))
 
     def dialog_new(self) -> None:
         win = tk.Toplevel(self)
-        win.title("新規プロジェクト作成")
+        win.title(self.tr("app_new_dialog_title"))
         win.geometry("460x380")
         win.configure(bg=APP_BG)
         win.transient(self)
         win.grab_set()
 
-        ttk.Label(win, text="プロジェクト名（半角英数字・-・_）").pack(anchor="w", padx=10, pady=(10, 0))
+        ttk.Label(win, text=self.tr("app_new_name_label")).pack(anchor="w", padx=10, pady=(10, 0))
         name_var = tk.StringVar()
         ttk.Entry(win, textvariable=name_var, width=40).pack(anchor="w", padx=10)
 
-        ttk.Label(win, text=f'作成先: {self.config.get("projects_root")}').pack(anchor="w", padx=10, pady=(8, 0))
+        ttk.Label(win, text=self.tr("app_new_root_label",
+                                     root=self.config.get("projects_root"))).pack(anchor="w", padx=10, pady=(8, 0))
 
-        ttk.Label(win, text="テンプレート").pack(anchor="w", padx=10, pady=(8, 0))
+        ttk.Label(win, text=self.tr("app_new_template_label")).pack(anchor="w", padx=10, pady=(8, 0))
         tmpl_var = tk.StringVar(value="python")
         ttk.Combobox(win, textvariable=tmpl_var, values=["python", "empty"],
                      state="readonly", width=38).pack(anchor="w", padx=10)
 
         venv_var = tk.BooleanVar(value=True)
         git_var = tk.BooleanVar(value=True)
-        ttk.Checkbutton(win, text="venv（.venv）を作成する", variable=venv_var).pack(anchor="w", padx=10, pady=(8, 0))
-        ttk.Checkbutton(win, text="git init して最初のコミットまで作る", variable=git_var).pack(anchor="w", padx=10)
+        ttk.Checkbutton(win, text=self.tr("app_new_venv_label"), variable=venv_var).pack(anchor="w", padx=10, pady=(8, 0))
+        ttk.Checkbutton(win, text=self.tr("app_new_git_label"), variable=git_var).pack(anchor="w", padx=10)
 
-        ttk.Label(win, text="GitHubリポジトリ").pack(anchor="w", padx=10, pady=(8, 0))
+        ttk.Label(win, text=self.tr("app_new_github_label")).pack(anchor="w", padx=10, pady=(8, 0))
         gh_var = tk.StringVar(value="none")
         ttk.Combobox(win, textvariable=gh_var, values=["none", "private", "public"],
                      state="readonly", width=38).pack(anchor="w", padx=10)
@@ -409,18 +468,19 @@ class App(tk.Tk):
         def create():
             name = name_var.get().strip()
             if not name:
-                messagebox.showerror("入力エラー", "プロジェクト名を入力してください", parent=win)
+                messagebox.showerror(self.tr("app_input_error_title"),
+                                     self.tr("app_new_name_required"), parent=win)
                 return
             win.destroy()
             root = self.config.get("projects_root")
             tmpl, mkvenv, gitinit, gh = tmpl_var.get(), venv_var.get(), git_var.get(), gh_var.get()
             self.run_async(
-                f"新規作成: {name}",
+                self.tr("app_new_title", name=name),
                 lambda log: core.create_project(name, root, template=tmpl,
                                                 make_venv=mkvenv, init_git=gitinit,
-                                                github=gh, log=log) and "作成完了")
+                                                github=gh, log=log) and self.tr("app_new_done"))
 
-        ttk.Button(win, text="作成する", style="Accent.TButton",
+        ttk.Button(win, text=self.tr("app_btn_create"), style="Accent.TButton",
                    command=create).pack(pady=16)
 
 

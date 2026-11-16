@@ -24,6 +24,16 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+from pj_manager import i18n
+
+
+def _t(key: str, **kwargs) -> str:
+    """このモジュールの表示文字列。言語は config.json の `language`。
+
+    CONFIG_FILE はテストで差し替えられるので、毎回読み直す。
+    """
+    return i18n.t(key, lang=i18n.get_language(CONFIG_FILE), **kwargs)
+
 # データ置き場: 環境変数 PJ_MANAGER_DATA_DIR があればそこ、
 # なければ src/pj_manager/core.py から見て2つ上（リポジトリのルート）。
 # エージェントやテストがサンドボックスへ差し替えられるようにするための口。
@@ -78,7 +88,7 @@ def run_cmd(cmd: list[str], cwd: Path | None = None) -> tuple[bool, str]:
     if cwd is not None and not Path(cwd).is_dir():
         # subprocess は存在しない cwd で FileNotFoundError を出すが、
         # それを「コマンドが見つかりません」と誤訳しないための先回り。
-        return False, f"フォルダがありません: {cwd}"
+        return False, _t("folder_missing", path=cwd)
     try:
         p = subprocess.run(cmd, cwd=str(cwd) if cwd else None,
                            capture_output=True, text=True,
@@ -86,9 +96,9 @@ def run_cmd(cmd: list[str], cwd: Path | None = None) -> tuple[bool, str]:
         out = (p.stdout or "") + (p.stderr or "")
         return p.returncode == 0, out.strip()
     except FileNotFoundError:
-        return False, f"コマンドが見つかりません: {cmd[0]}"
+        return False, _t("command_not_found", cmd=cmd[0])
     except subprocess.TimeoutExpired:
-        return False, "タイムアウトしました（600秒）"
+        return False, _t("timeout")
 
 
 def has_venv(path: Path) -> bool:
@@ -121,11 +131,13 @@ def _parse_json_file(path: Path):
 
 
 def load_config() -> dict:
-    cfg = {"projects_root": str(Path.home() / "Projects")}
+    cfg = {"projects_root": str(Path.home() / "Projects"),
+           "language": i18n.DEFAULT_LANGUAGE}
     if CONFIG_FILE.exists():
         data, corrupt = _parse_json_file(CONFIG_FILE)
         if not corrupt and isinstance(data, dict):
             cfg.update(data)
+    cfg["language"] = i18n.normalize_language(cfg.get("language"))
     return cfg
 
 
@@ -210,17 +222,16 @@ def register_existing(path: str | Path, entries: list[dict] | None = None) -> di
     """既存フォルダを登録する。entries を渡すとそこへ追加して保存する。"""
     p = Path(path).expanduser().resolve()
     if not p.is_dir():
-        raise ValueError(f"フォルダがありません: {p}")
+        raise ValueError(_t("folder_missing", path=p))
     own = entries is None
     if own:
         entries = load_registry()
     for e in entries:
         if Path(e["path"]).resolve() == p:
-            raise ValueError(f"すでに登録されています: {e['name']}")
+            raise ValueError(_t("already_registered", name=e["name"]))
         if e.get("name") == p.name:
-            raise ValueError(
-                f"同じ名前のプロジェクトがすでに登録されています: {p.name} "
-                f"（{e['path']}）。フォルダ名を変えるか先に unregister してください")
+            raise ValueError(_t("duplicate_name_register",
+                                name=p.name, path=e["path"]))
     entry = {
         "name": p.name,
         "path": str(p),
@@ -361,10 +372,10 @@ def check_all() -> dict:
 # ---------- GitHub（gh CLI） ----------
 def gh_available() -> tuple[bool, str]:
     if not shutil.which("gh"):
-        return False, "gh CLI が入っていません（https://cli.github.com/ からインストール）"
+        return False, _t("gh_not_installed")
     ok, out = run_cmd(["gh", "auth", "status"])
     if not ok:
-        return False, "gh にログインしていません。ターミナルで `gh auth login` を実行してください"
+        return False, _t("gh_not_logged_in")
     return True, out
 
 
@@ -376,7 +387,7 @@ def github_create(path: str | Path, visibility: str = "private",
     if not ok:
         return False, msg
     if git_status(p)["remote"]:
-        return False, "すでに origin が設定されています"
+        return False, _t("origin_already_set")
     cmd = ["gh", "repo", "create", p.name, f"--{visibility}",
            "--source", str(p), "--remote", "origin"]
     if push:
@@ -414,16 +425,16 @@ def doctor() -> dict:
     ver = sys.version_info
     if ver < (3, 10):
         add("python", "fail",
-            f"Python {sys.version.split()[0]}（3.10 以上が必要です）")
+            _t("doctor_python_old", version=sys.version.split()[0]))
     else:
         add("python", "ok", f"Python {sys.version.split()[0]}")
 
     # venv モジュール
     try:
         import venv  # noqa: F401
-        add("venv", "ok", "venv モジュールが使えます")
+        add("venv", "ok", _t("doctor_venv_ok"))
     except ImportError:
-        add("venv", "fail", "venv モジュールがありません")
+        add("venv", "fail", _t("doctor_venv_missing"))
 
     # git
     git = shutil.which("git")
@@ -431,31 +442,31 @@ def doctor() -> dict:
         ok, out = run_cmd(["git", "--version"])
         add("git", "ok", out.splitlines()[0] if ok and out else f"git ({git})")
     else:
-        add("git", "warn", "git が見つかりません",
-            "git を入れると git init / コミットなどの機能が使えます")
+        add("git", "warn", _t("doctor_git_missing"),
+            _t("doctor_git_missing_hint"))
 
     # gh
     ok, _msg = gh_available()
     if ok:
-        add("gh", "ok", "gh CLI にログイン済みです")
+        add("gh", "ok", _t("doctor_gh_ok"))
     elif shutil.which("gh"):
-        add("gh", "warn", "gh CLI はありますがログインしていません",
-            "ターミナルで `gh auth login` を実行してください")
+        add("gh", "warn", _t("doctor_gh_not_logged_in"),
+            _t("doctor_gh_not_logged_in_hint"))
     else:
-        add("gh", "warn", "gh CLI が入っていません",
-            "GitHub 機能を使う場合は https://cli.github.com/ からインストール")
+        add("gh", "warn", _t("doctor_gh_missing"),
+            _t("doctor_gh_missing_hint"))
 
     # projects_root
     cfg = load_config()
     root = Path(cfg.get("projects_root", "")).expanduser()
     if root.is_dir():
-        add("projects_root", "ok", f"存在します: {root}")
+        add("projects_root", "ok", _t("doctor_root_ok", path=root))
     elif root.parent.is_dir() and os.access(root.parent, os.W_OK):
         add("projects_root", "ok",
-            f"まだありません（初回作成時に作られます）: {root}")
+            _t("doctor_root_will_create", path=root))
     else:
-        add("projects_root", "fail", f"作れません: {root}",
-            "config set-root で書き込めるフォルダを指定してください")
+        add("projects_root", "fail", _t("doctor_root_fail", path=root),
+            _t("doctor_root_fail_hint"))
 
     # data dir（書き込み可否を実際に試す）
     try:
@@ -463,18 +474,17 @@ def doctor() -> dict:
         probe = DATA_DIR / ".doctor-probe"
         probe.write_text("ok", encoding="utf-8")
         probe.unlink()
-        add("data_dir", "ok", f"書き込めます: {DATA_DIR}")
+        add("data_dir", "ok", _t("doctor_data_ok", path=DATA_DIR))
     except OSError as e:
-        add("data_dir", "fail", f"書き込めません: {DATA_DIR} ({e})")
+        add("data_dir", "fail", _t("doctor_data_fail", path=DATA_DIR, error=e))
 
     # registry（壊れ・読み取れない件・同名重複・フォルダ無しの登録を検出）
     if REGISTRY_FILE.exists():
         entries, malformed, corrupt = _registry_state()
         if corrupt:
             add("registry", "fail",
-                "projects.json が読めません（壊れている可能性があります）",
-                "projects.json を削除すると空の登録簿から始められます"
-                "（登録だけが消え、フォルダは残ります）")
+                _t("doctor_registry_corrupt"),
+                _t("doctor_registry_corrupt_hint"))
         else:
             seen: dict[str, int] = {}
             for e in entries:
@@ -484,37 +494,36 @@ def doctor() -> dict:
                        if not Path(e["path"]).is_dir()]
             if malformed:
                 add("registry", "warn",
-                    f"{len(entries)} 件登録中・読み取れない登録が "
-                    f"{malformed} 件あります",
-                    "次に登録簿を保存するとき、読み取れない登録は "
-                    "projects.json.bak-<日時> に退避されます")
+                    _t("doctor_registry_malformed",
+                       count=len(entries), malformed=malformed),
+                    _t("doctor_registry_malformed_hint"))
             elif dupes:
                 add("registry", "warn",
-                    f"同じ名前の登録が重複しています: {', '.join(dupes)}",
-                    "名前で区別できないため、片方を unregister してください")
+                    _t("doctor_registry_dupes", names=", ".join(dupes)),
+                    _t("doctor_registry_dupes_hint"))
             elif missing:
                 add("registry", "warn",
-                    f"{len(entries)} 件登録中・うちフォルダが無いもの: "
-                    f"{', '.join(missing)}",
-                    "存在しないフォルダの登録は unregister で外せます")
+                    _t("doctor_registry_missing",
+                       count=len(entries), names=", ".join(missing)),
+                    _t("doctor_registry_missing_hint"))
             elif entries:
                 add("registry", "ok",
-                    f"{len(entries)} 件登録中（フォルダは全て存在します）")
+                    _t("doctor_registry_ok", count=len(entries)))
             else:
-                add("registry", "ok", "登録はまだありません（空です）")
+                add("registry", "ok", _t("doctor_registry_empty"))
     else:
-        add("registry", "ok", "まだありません（初回登録時に作られます）")
+        add("registry", "ok", _t("doctor_registry_absent"))
 
     # config（空ファイルは既定値扱い＝ok）
     if CONFIG_FILE.exists():
         data, corrupt = _parse_json_file(CONFIG_FILE)
         if corrupt or (data != "empty" and not isinstance(data, dict)):
-            add("config", "warn", "config.json が読めません（既定値で動きます）",
-                "config.json を削除すると既定値に戻ります")
+            add("config", "warn", _t("doctor_config_unreadable"),
+                _t("doctor_config_unreadable_hint"))
         else:
-            add("config", "ok", "config.json が読めます")
+            add("config", "ok", _t("doctor_config_ok"))
     else:
-        add("config", "ok", "まだありません（既定値で動きます）")
+        add("config", "ok", _t("doctor_config_absent"))
 
     levels = [c["level"] for c in checks]
     status = "fail" if "fail" in levels else (
@@ -533,50 +542,47 @@ def create_project(name: str, root: str | Path, template: str = "python",
     """新規プロジェクトを作って登録する。github: none/private/public"""
     name = name.strip()
     if not NAME_RE.match(name):
-        raise ValueError("プロジェクト名は半角英数字・ハイフン・アンダースコアで、"
-                         "英数字から始めてください（フォルダ名になります）")
+        raise ValueError(_t("invalid_name"))
     if len(name.encode("utf-8")) > 255:
-        raise ValueError("プロジェクト名が長すぎます（255バイト以内にしてください）")
+        raise ValueError(_t("name_too_long"))
     existing = find_entry(load_registry(), name)
     if existing is not None:
-        raise ValueError(
-            f"同じ名前のプロジェクトがすでに登録されています: {name} "
-            f"（{existing['path']}）。別の名前にしてください")
+        raise ValueError(_t("duplicate_name_create",
+                            name=name, path=existing["path"]))
     root = Path(root).expanduser()
     root.mkdir(parents=True, exist_ok=True)
     path = root / name
     if path.exists():
-        raise ValueError(f"同じ名前のフォルダがすでにあります: {path}")
+        raise ValueError(_t("folder_exists", path=path))
 
     path.mkdir(parents=True)
-    log(f"フォルダを作成: {path}")
+    log(_t("log_folder_created", path=path))
     (path / "README.md").write_text(README_TMPL.format(name=name), encoding="utf-8")
     if template == "python":
         (path / "main.py").write_text(MAIN_PY, encoding="utf-8")
         (path / ".gitignore").write_text(GITIGNORE_PYTHON, encoding="utf-8")
         (path / "requirements.txt").write_text("", encoding="utf-8")
-        log("テンプレート（Python）を配置しました")
+        log(_t("log_template_placed"))
 
     if make_venv:
-        log("venv を作成中…（少し時間がかかります）")
+        log(_t("log_venv_creating"))
         ok, out = run_cmd([sys.executable, "-m", "venv", ".venv"], cwd=path)
-        log("venv を作成しました" if ok else f"venv 作成に失敗: {out}")
+        log(_t("log_venv_created") if ok else _t("log_venv_failed", out=out))
 
     if init_git:
         if not shutil.which("git"):
-            log("git が入っていないため、git init をスキップしました")
+            log(_t("log_git_skip_no_git"))
         else:
             ok, out = run_cmd(["git", "init", "-b", "main"], cwd=path)
             if not ok:  # 古いgit向けフォールバック
                 run_cmd(["git", "init"], cwd=path)
                 run_cmd(["git", "branch", "-M", "main"], cwd=path)
-            log("git init しました")
+            log(_t("log_git_init"))
             ok, out = commit_all(path, "Initial commit")
             if ok:
-                log("最初のコミットを作成しました")
+                log(_t("log_first_commit"))
             else:
-                log("最初のコミットはスキップしました。"
-                    "（git のユーザー名/メール未設定などの場合は、設定後にコミットしてください）")
+                log(_t("log_first_commit_skip"))
 
     entry = {
         "name": name,
@@ -588,13 +594,13 @@ def create_project(name: str, root: str | Path, template: str = "python",
     entries.append(entry)
     entries.sort(key=lambda x: x["name"].lower())
     save_registry(entries)
-    log("プロジェクト一覧に登録しました")
+    log(_t("log_registered"))
 
     if github in ("private", "public"):
         ok, out = github_create(path, visibility=github, push=True)
         if ok:
-            log(f"GitHub リポジトリを作成しました（{github}）")
+            log(_t("log_github_created", visibility=github))
         else:
-            log(f"GitHub 作成に失敗: {out}")
-            log("プロジェクト自体はできています。後から一覧のボタンでも作成できます")
+            log(_t("log_github_failed", out=out))
+            log(_t("log_github_project_ok"))
     return entry

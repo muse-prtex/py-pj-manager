@@ -1,5 +1,45 @@
 # Changelog
 
+## 0.11.0 — 2026-11-16
+
+- Language switch groundwork: all UI strings now live in one dictionary
+  (`src/pj_manager/i18n.py`, `STRINGS`, ja/en). The display language is
+  `config.json` `language` ("ja" default / "en"), switched from the
+  **言語 / Language** dropdown at the bottom-left of the tkinter GUI or
+  with `pj-manager config set-language ja|en` (unknown values are
+  rejected, and the previous language stays). The CLI's human-readable
+  output (doctor details, error messages, status/check lines) and the
+  whole tkinter GUI follow the setting; `--json` output (keys and values)
+  does not change with the language. `i18n.check_dictionaries()` and a
+  test that every key referenced from core.py / cli.py / app.py exists
+  guard the dictionaries; `load_config()` normalizes an unknown language
+  back to "ja".
+- Real use: created a project with venv + git init + initial commit and
+  registered a plain folder in a sandbox, then ran list / status /
+  doctor / check in both languages. English doctor details and error
+  messages ("Not a git repository: … (run `init` first …)", "Project not
+  found: …") were verified, as was switching back to Japanese. The GUI
+  was opened under Xvfb in both languages (screenshots) and the language
+  was switched from inside the GUI — the switcher saves the setting and
+  rebuilds the window. Caught by the real run: switching languages used
+  to drop the selected project (the detail fell back to the placeholder);
+  `_rebuild()` now keeps the selection and re-shows the detail.
+  A `gui_shot.py` quirk was also found and fixed in the tool: with the
+  default `event_generate` the language event is processed synchronously
+  and the selection event queued right after it is lost to the rebuild,
+  so the tool now queues the switch with `when="tail"` and selects after
+  a short delay (real clicks go through the mainloop, so this never
+  affects actual use).
+- Not yet switched: the strings in the Tauri desktop UI
+  (`desktop/ui/index.html`) are still Japanese-only; they follow in a
+  later session. The README template written into a newly created project
+  is also still Japanese for now.
+- Tests: 12 new tests in `tests/test_i18n.py` (dictionary completeness,
+  referenced-key coverage, language normalization, core messages and
+  doctor details in both languages, CLI `set-language` incl. rejection
+  of unknown values, `--json` being language-independent). 67 tests
+  total, all passing.
+
 ## 0.10.0 — 2026-11-16
 
 - Cross-project health check: new `check` command (`core.check_all()` +

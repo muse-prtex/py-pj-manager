@@ -22,6 +22,12 @@ English README: [README.md](README.md)
 
 初期設定はホームフォルダの `Projects` です。画面左下の「作成先フォルダの設定」から変更できます（設定は `config.json` に保存されます）。
 
+表示言語は日本語が既定です。画面左下の「言語」から切り替えるか、CLI で
+`pj-manager config set-language en` を実行してください（`ja` で日本語に
+戻ります）。CLI の人間向け出力と tkinter GUI が切り替わります。`--json`
+の出力は言語で変わりません。Tauri 製デスクトップ UI は今のところ日本語
+のままで、後のセッションで追随します。
+
 ## GitHub 連携の前提
 
 GitHub機能は GitHub公式の `gh` CLI を使います。未導入の場合は https://cli.github.com/ から入れて、ターミナルで一度だけ `gh auth login` してください。未導入・未ログインでも、GitHub以外の機能はそのまま使えます。
@@ -40,6 +46,7 @@ git config --global user.email "あなたのメール"
 - `src/pj_manager/app.py` … 画面（GUI）本体
 - `src/pj_manager/core.py` … 一覧管理・作成・git/GitHub操作のロジック
 - `src/pj_manager/cli.py` … スクリプト／AIエージェント用 CLI（AGENTS.md 参照）
+- `src/pj_manager/i18n.py` … 表示文字列の辞書（日本語／英語）と表示言語の解決
 - `src/pj_manager/__main__.py` … `python -m pj_manager` 用
 - `tests/` … core の unittest
 - `pjman.py` … 互換用ランチャー（従来どおり `py pjman.py` でも起動できます）

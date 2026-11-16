@@ -31,7 +31,16 @@ python -m pj_manager.cli doctor --json
 python -m pj_manager.cli check --json
 python -m pj_manager.cli config show --json
 python -m pj_manager.cli config set-root DIR --json
+python -m pj_manager.cli config set-language ja|en --json
 ```
+
+Display language: `config.json` `language` ("ja" default / "en"). The CLI's
+human-readable output and the tkinter GUI follow it; `--json` output does not
+change with the language. The desktop UI is still Japanese-only for now.
+UI strings live in `src/pj_manager/i18n.py` (`STRINGS`); add a key there and
+use `i18n.t(key, …)` instead of writing a user-facing string inline. New
+projects' `README.md` template is still Japanese.
+
 
 Contract:
 
