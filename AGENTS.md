@@ -80,6 +80,13 @@ Contract:
   commits yet succeeds with an empty list (`{"ok": true, "log": []}`) and
   a localized "no commits yet" message instead of failing with git's raw
   "does not have any commits yet" — an empty history is not a failure.
+  `log -n` with a count of 0 or a negative number fails (exit 1) with a
+  friendly, localized message — "表示件数には1以上の整数を指定して
+  ください（-n N）" / "Number of commits must be a positive integer
+  (use -n N)" — instead of passing "-0" / "--1" to `git log` and
+  returning git's raw "fatal: unrecognized argument: --1". The check
+  runs in `cli.cmd_log` before git and before the empty-repo success
+  path. A positive count still lists that many commits.
 - `push` / `pull` with no remote or no upstream branch configured still
   fail (exit 1) — the desired end state is not met — but with a
   friendly, localized message that says what to do next

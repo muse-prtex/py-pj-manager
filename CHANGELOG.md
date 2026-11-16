@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.23.0 — 2026-11-16
+
+- `log -n` with a count of 0 or a negative number now fails with a
+  friendly, localized message — "表示件数には1以上の整数を指定して
+  ください（-n N）" / "Number of commits must be a positive integer
+  (use -n N)" — instead of git's raw English "fatal: unrecognized
+  argument: --1" (`-n -1` used to be passed to `git log` as "--1").
+  `-n 0` used to succeed silently with an empty list. The failure
+  stays a failure (exit 1): the count is a caller error. The check
+  runs in `cli.cmd_log` before calling git, and before the empty-repo
+  success path — an invalid count fails even on a repository with no
+  commits yet. The same idea as the empty commit message (v0.22.0).
+- Real use: in the sandbox, created a project, made a second commit,
+  and ran `log` with `-n -1` and `-n 0` (Japanese, English,
+  `--json`) — all exit 1 with the friendly message and no "fatal:";
+  `-n 1` and the default still list the history normally (screenshot
+  `session21-log-count.png`).
+- Tests: 6 new tests in `tests/test_log_count.py` (CLI: -n -1 / -n 0
+  fail friendly in ja/en/JSON with exit 1, fail on an empty repo too,
+  and positive counts still list the right number of commits).
+
 ## 0.22.0 — 2026-11-16
 
 - A `commit` with an empty commit message (`-m ""` or whitespace only)

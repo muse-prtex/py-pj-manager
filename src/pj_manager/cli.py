@@ -187,6 +187,13 @@ def cmd_git_op(op: str):
 
 def cmd_log(args) -> int:
     path = _resolve(args.target)
+    # -n に 0 や負の値を渡すと、CLI は "-0" / "--1" を git log に渡して
+    # しまい、git の生の英語エラー（"fatal: unrecognized argument:
+    # --1"）がそのまま出る。件数は呼び出し側の指定ミスなので、git に
+    # 渡す前に日英の親切な文言で失敗させる（空メッセージの commit と
+    # 同じ考え方）。空リポジトリの成功扱いより先に弾く。
+    if args.n < 1:
+        return _fail(_t("cli_invalid_log_count"), args.json)
     err = _require_git_repo(path)
     if err:
         return _fail(err, args.json)

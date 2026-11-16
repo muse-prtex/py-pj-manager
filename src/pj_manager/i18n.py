@@ -456,6 +456,10 @@ STRINGS: dict[str, dict[str, str]] = {
         "ja": "まだコミットがありません",
         "en": "No commits yet",
     },
+    "cli_invalid_log_count": {
+        "ja": "表示件数には1以上の整数を指定してください（-n N）",
+        "en": "Number of commits must be a positive integer (use -n N)",
+    },
     "cli_init_failed": {
         "ja": "git init failed",
         "en": "git init failed",
