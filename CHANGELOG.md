@@ -1,5 +1,13 @@
 # Changelog
 
+> 24時間集中セッション（2026-11-16 01:08〜2026-11-17 01:08 JST）の総仕上げ：
+> セッション1〜23で v0.3.0 → v0.24.0 へ進み、全174テストが通過、実使用フルコース
+> （作成→登録→変更→コミット→状態確認）も確認済み。最終バージョンは **0.24.0**。
+> 既知の残課題：`docs/images/` の PNG 7枚が GitHub 上に未反映（コネクタがバイナリを
+> 扱えないため。Box の `docs-images-v0.12.0.zip` に実体あり。GitHub Web UI から
+> `docs/images/` へドラッグ＆ドロップすれば usage.md と README の画像リンクが直る）。
+> 週1回の改善（水曜）は `py-pj-manager-weekly-improvement` で継続。
+
 ## 0.24.0 — 2026-11-17
 
 - `create` with a `--root` that is a file, or whose path is blocked
