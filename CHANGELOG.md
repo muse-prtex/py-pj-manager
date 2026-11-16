@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.12.0 — 2026-11-16
+
+- Documentation: new `docs/usage.md` — a full usage guide with real
+  screenshots (GUI, desktop app incl. empty state and new-project modal,
+  English GUI, `doctor` / `check` runs). The screenshots live in
+  `docs/images/` and are real captures taken while using the tool, not
+  mock-ups. README.md and README.ja.md now show the GUI and desktop
+  screenshots near the top and link to the guide.
+- Real use: every command and output quoted in the guide was actually run
+  in a sandbox first (`create` with venv + git init + initial commit,
+  `register` of a plain folder, `list` / `status` / `doctor` / `check`) —
+  the quoted outputs are verbatim from those runs, including the
+  `gh not logged in` warning in `doctor` and the `attention` state of a
+  non-git project in `check`. The GUI screenshot is a fresh capture of
+  v0.12.0 under Xvfb; the desktop and CLI shots are reused from the
+  sessions that verified those screens (v0.8.0 desktop UI, v0.10.0
+  `check`, v0.11.0 English GUI) — the UIs have not changed since.
+- Tests: 9 new tests in `tests/test_docs.py` (every image referenced from
+  usage.md / README.md / README.ja.md exists and is a real PNG, every
+  file in `docs/images/` is referenced, required sections exist, links
+  resolve inside the repo, no `sandbox://` paths leak into the docs).
+  76 tests total, all passing.
+
 ## 0.11.0 — 2026-11-16
 
 - Language switch groundwork: all UI strings now live in one dictionary

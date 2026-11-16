@@ -6,7 +6,10 @@ open, and git/GitHub them** from a single window.
 No dependencies beyond the Python standard library — clone it, double-click
 `run.bat`, and it runs.
 
-日本語の README は [README.ja.md](README.ja.md) にあります。
+![PJ Manager GUI](docs/images/gui.png)
+
+日本語の README は [README.ja.md](README.ja.md) にあります。使い方の
+詳細は [docs/usage.md](docs/usage.md)（スクショ付き）を見てください。
 
 ## Features
 
@@ -87,6 +90,8 @@ A Tauri-based desktop app lives in [`desktop/`](desktop/README.md) — dark
 sidebar, cards, badges, search. It drives the same Python core through the
 CLI below, so both faces always agree. The tkinter GUI remains available as
 a zero-dependency fallback (`run.bat`).
+
+![Desktop app](docs/images/desktop.png)
 
 ## CLI for scripts and AI agents
 

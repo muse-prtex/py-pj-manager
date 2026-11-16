@@ -3,7 +3,10 @@
 プロジェクトの「選ぶ・作る・開く・Git/GitHubで管理する」を1つの画面にまとめた道具です。
 追加の依存はなく、Python標準機能だけで動きます。
 
+![PJマネージャーのメイン画面](docs/images/gui.png)
+
 English README: [README.md](README.md)
+使い方の詳細は [docs/usage.md](docs/usage.md)（スクショ付き）を見てください。
 
 ## 起動
 
@@ -62,6 +65,8 @@ Tauri 製のデスクトップ版が [`desktop/`](desktop/README.md) にあり�
 （ダークサイドバー、カード表示、バッジ、検索つき）。中身の処理は下記
 CLI 経由で Python コアを呼ぶだけなので、どの画面からでも状態は一致
 します。tkinter 版 GUI は依存ゼロの予備として `run.bat` から使えます。
+
+![デスクトップアプリ](docs/images/desktop.png)
 
 ## スクリプト／AIエージェント用 CLI
 
