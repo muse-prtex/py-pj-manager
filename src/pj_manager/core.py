@@ -292,6 +292,45 @@ def git_op(path: str | Path, *args: str) -> tuple[bool, str]:
     return run_cmd(["git", *args], cwd=Path(path))
 
 
+def upstream_state(path: str | Path) -> str:
+    """push / pull の前提（リモートと上流ブランチ）の状態を返す。
+
+    "ok" / "no-remote" / "no-upstream" のいずれか。判定は git の
+    終了コードだけで行い、git の文言（ロケールで変わる）には依存しない。
+    """
+    ok, out = run_cmd(["git", "remote"], cwd=Path(path))
+    if not ok or not out.strip():
+        return "no-remote"
+    ok, _out = run_cmd(["git", "rev-parse", "--abbrev-ref",
+                        "--symbolic-full-name", "@{u}"], cwd=Path(path))
+    return "ok" if ok else "no-upstream"
+
+
+def git_push_pull(path: str | Path, op: str) -> tuple[bool, str]:
+    """git push / pull。リモート未設定・上流ブランチ未設定のときは
+    git の生の英語エラーではなく、次に何をすればよいか分かる
+    日英の文言で失敗する（セッション15〜17の変更なしコミット・
+    コミット0件の log と同じ考え方）。それ以外の本物の失敗
+    （到達できないリモート、認証エラーなど）は従来どおり git の
+    出力をそのまま返す。コミットがまだ無いリポジトリは push/pull
+    の前提以前の問題なので、git の出力をそのまま返す。
+    """
+    p = Path(path)
+    ok, out = git_op(p, op)
+    if ok:
+        return True, out
+    if shutil.which("git") and has_commits(p):
+        state = upstream_state(p)
+        if state == "no-remote":
+            return False, _t("cli_no_remote")
+        if state == "no-upstream":
+            branch = git_status(p).get("branch") or "main"
+            if op == "push":
+                return False, _t("cli_no_upstream_push", branch=branch)
+            return False, _t("cli_no_upstream_pull", branch=branch)
+    return False, out
+
+
 def has_commits(path: str | Path) -> bool:
     """HEAD が指すコミットがあるか。まだ1件も無い空のリポジトリは False。
 

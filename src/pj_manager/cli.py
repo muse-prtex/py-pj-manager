@@ -178,7 +178,7 @@ def cmd_git_op(op: str):
         err = _require_git_repo(path)
         if err:
             return _fail(err, args.json)
-        ok, out = core.git_op(path, op)
+        ok, out = core.git_push_pull(path, op)
         if not ok:
             return _fail(out or _t("cli_git_op_failed", op=op), args.json)
         return _out({"ok": True, "output": out}, args.json, out)

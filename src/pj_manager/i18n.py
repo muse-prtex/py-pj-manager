@@ -398,6 +398,26 @@ STRINGS: dict[str, dict[str, str]] = {
         "ja": "git {op} failed",
         "en": "git {op} failed",
     },
+    "cli_no_remote": {
+        "ja": "リモートが設定されていません"
+              "（`git remote add origin <URL>` で追加してください）",
+        "en": "No remote is configured "
+              "(add one with `git remote add origin <URL>`)",
+    },
+    "cli_no_upstream_push": {
+        "ja": "上流ブランチが設定されていません"
+              "（`git push --set-upstream origin {branch}` で設定してください）",
+        "en": "No upstream branch is configured "
+              "(set it with `git push --set-upstream origin {branch}`)",
+    },
+    "cli_no_upstream_pull": {
+        "ja": "上流ブランチが設定されていません"
+              "（`git pull origin {branch}` で取り込むか、"
+              "`git branch --set-upstream-to=origin/{branch} {branch}` で設定してください）",
+        "en": "No upstream branch is configured "
+              "(run `git pull origin {branch}` to fetch, or set it with "
+              "`git branch --set-upstream-to=origin/{branch} {branch}`)",
+    },
     "cli_log_failed": {
         "ja": "git log failed",
         "en": "git log failed",

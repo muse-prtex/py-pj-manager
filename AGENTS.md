@@ -63,6 +63,16 @@ Contract:
   commits yet succeeds with an empty list (`{"ok": true, "log": []}`) and
   a localized "no commits yet" message instead of failing with git's raw
   "does not have any commits yet" — an empty history is not a failure.
+- `push` / `pull` with no remote or no upstream branch configured still
+  fail (exit 1) — the desired end state is not met — but with a
+  friendly, localized message that says what to do next
+  ("リモートが設定されていません…" / "No remote is configured …",
+  "上流ブランチが設定されていません…" / "No upstream branch is
+  configured …") instead of git's raw English output. A real failure
+  (an unreachable remote, an authentication error) still passes git's
+  output through unchanged, and a repository with no commits yet keeps
+  git's own message. The tkinter GUI's push / pull buttons use the same
+  path (`core.git_push_pull`), so they show the friendly message too.
 - `doctor` checks the environment (Python / venv / git / gh / projects_root
   / data dir / registry / config) and returns `{"ok", "status", "checks",
   "summary"}`. `status` is `ok` / `warn` / `fail`; exit code is 1 only when

@@ -1,5 +1,51 @@
 # Changelog
 
+## 0.20.0 — 2026-11-16
+
+- `push` / `pull` with no remote or no upstream branch configured now
+  fail with a friendly, localized message that says what to do next,
+  instead of git's raw English output. A freshly created project has a
+  local repository with no remote, so `push` used to exit 1 with
+  "fatal: No configured push destination." and `pull` with "There is no
+  tracking information for the current branch."; with a remote added but
+  no upstream, `push` failed with "The current branch main has no
+  upstream branch.". The commands still fail (exit 1) — the desired end
+  state (pushed / pulled) is not met — but now report
+  "リモートが設定されていません（`git remote add origin <URL>` で追加
+  してください）" / "No remote is configured …" when no remote exists,
+  and "上流ブランチが設定されていません（`git push --set-upstream
+  origin main` で設定してください）" / "No upstream branch is
+  configured …" (for `pull`: "`git pull origin main` で取り込むか…")
+  when a remote exists but the branch tracks none. The same idea as
+  the clean-tree commit (v0.17.0) and the empty-repo log (v0.19.0).
+  Detection is `core.upstream_state()` via `git remote` and
+  `git rev-parse @{u}` exit codes, so it does not depend on git's
+  message text (which changes with locale). A real failure (an
+  unreachable remote, an authentication error) still passes git's
+  output through unchanged, and a repository with no commits yet keeps
+  git's own message. The tkinter GUI's push / pull buttons use the same
+  path (`core.git_push_pull`), so they show the friendly message too.
+- Real use: in the sandbox, created a project and ran `push` / `pull`
+  with no remote (Japanese, English, `--json`), then added a bare
+  remote and ran both again with no upstream — all exit 1 with the
+  friendly message and no "fatal:"; setting the upstream once makes
+  `push` succeed (screenshot `session18-push.png`).
+- Tests: 15 new tests in `tests/test_push_pull.py` (`upstream_state`
+  in all three states, friendly messages in ja/en/JSON for both
+  commands, push still succeeding with an upstream, unreachable
+  remote staying raw, empty repo staying raw). 139 tests total, all
+  passing.
+- `day-run/tools/session18-push.sh` — the real-use demo for this
+  session (create, push/pull with no remote, add a bare remote,
+  push/pull with no upstream, English display, then push with an
+  upstream set); run it through `term_shot.py` to re-take the
+  screenshot.
+- Note: the 7 screenshots in `docs/images/` still cannot be pushed with
+  the GitHub connector — `push_files` / `create_or_update_file` accept
+  UTF-8 text only. The images are in Box as `docs-images-v0.12.0.zip`
+  (`12_Muse/PJマネージャー`); adding them via the GitHub web UI to
+  `docs/images/` fixes the links in `docs/usage.md` and the READMEs.
+
 ## 0.19.0 — 2026-11-16
 
 - `log` on a repository with no commits yet no longer fails. It used to

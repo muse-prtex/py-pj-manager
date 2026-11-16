@@ -402,7 +402,7 @@ class App(tk.Tk):
         if not e:
             return
         self.run_async(f"{op}: {e['name']}",
-                       lambda log: self._git_result(core.git_op(e["path"], op)))
+                       lambda log: self._git_result(core.git_push_pull(e["path"], op)))
 
     def _git_result(self, result: tuple[bool, str]) -> str:
         ok, out = result
