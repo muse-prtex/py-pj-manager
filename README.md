@@ -93,6 +93,7 @@ pj-manager create my-app --json
 pj-manager status my-app --json
 pj-manager commit my-app -m "wip" --json
 pj-manager doctor --json
+pj-manager check --json
 ```
 
 Without installing, the same CLI runs with `PYTHONPATH=src`:

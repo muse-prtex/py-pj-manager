@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.10.0 — 2026-11-16
+
+- Cross-project health check: new `check` command (`core.check_all()` +
+  `cli.py`). One JSON object covers every registered project: `state`
+  (`ok` / `attention` / `missing`), `has_venv`, the `git` numbers
+  (branch / dirty / ahead / behind / last_commit) and a short `issues`
+  tag list (`dirty:2`, `ahead:1`, `behind:1`, `no-venv`, `not-git`,
+  `missing`), plus a `summary` of counts. Overall `ok` is false (exit
+  code 1) only when a registered folder is gone; dirty / ahead / behind
+  / no-venv are `attention`, not failure — the same thinking as
+  `doctor`. Human output is one line per project plus a summary line.
+- Real use: six projects in a sandbox with deliberately different
+  states (clean + venv, dirty, ahead of a bare remote, behind a bare
+  remote, not a git repo, folder deleted after registering) — `check`
+  reported all six states and counts correctly, exit code 1 only for
+  the missing folder. Caught by the real run: nothing broke, but the
+  test setup itself needed the same care as the feature (bare-remote
+  HEAD must point at `main`, and `behind` only shows with an upstream
+  set) — both are now pinned by tests.
+- Tests: 11 new tests in `tests/test_check.py` (core states incl.
+  ahead/behind against a bare remote, mixed summary counts, CLI JSON +
+  human output, exit codes). 55 tests total, all passing.
+
 ## 0.9.0 — 2026-11-16
 
 - Packaging: added `pyproject.toml`, so the tool installs with

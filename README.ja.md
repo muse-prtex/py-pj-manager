@@ -69,6 +69,7 @@ pj-manager create my-app --json
 pj-manager status my-app --json
 pj-manager commit my-app -m "wip" --json
 pj-manager doctor --json
+pj-manager check --json
 ```
 
 インストールしない場合は、同じ CLI を `PYTHONPATH=src` で実行できます：

@@ -288,6 +288,76 @@ def commit_all(path: str | Path, message: str) -> tuple[bool, str]:
     return git_op(path, "commit", "-m", message)
 
 
+# ---------- 横断ヘルスチェック（check） ----------
+def project_health(entry: dict) -> dict:
+    """1件のプロジェクトの健全性を辞書で返す。
+
+    state は "ok" / "attention" / "missing" のいずれか。
+    - missing: 登録されたフォルダが無い（doctor の warn 相当だが、
+      check では全体の ok を False にする）。
+    - attention: フォルダはあるが、dirty / ahead / behind / venv無し /
+      git管理外のいずれかがある。
+    - ok: それ以外（クリーン・同期済み・venv 有り）。
+    issues は気になる点の短いタグ一覧（人間向けの目安）。
+    """
+    path = Path(entry["path"])
+    info = dict(entry)
+    info["exists"] = path.is_dir()
+    info["has_venv"] = has_venv(path) if info["exists"] else False
+    git = git_status(path) if info["exists"] else {
+        "is_git": False, "branch": "", "dirty": 0,
+        "ahead": 0, "behind": 0, "remote": "", "last_commit": ""}
+    info["git"] = git
+    issues: list[str] = []
+    if not info["exists"]:
+        info["state"] = "missing"
+        issues.append("missing")
+    else:
+        if not git["is_git"]:
+            issues.append("not-git")
+        else:
+            if git["dirty"]:
+                issues.append(f"dirty:{git['dirty']}")
+            if git["ahead"]:
+                issues.append(f"ahead:{git['ahead']}")
+            if git["behind"]:
+                issues.append(f"behind:{git['behind']}")
+        if not info["has_venv"]:
+            issues.append("no-venv")
+        info["state"] = "attention" if issues else "ok"
+    info["issues"] = issues
+    return info
+
+
+def check_all() -> dict:
+    """登録中の全プロジェクトの健全性を一括で返す（check コマンドの中身）。
+
+    ok はフォルダが無い登録（missing）が1件も無いこと。
+    dirty / ahead / behind / venv無し / git管理外は attention であって
+    fail ではない（doctor と同じ考え方）。summary は件数の集計。
+    """
+    projects = [project_health(e) for e in load_registry()]
+    summary = {"total": len(projects), "ok": 0, "attention": 0,
+               "missing": 0, "dirty": 0, "ahead": 0, "behind": 0,
+               "no_venv": 0, "not_git": 0}
+    for p in projects:
+        summary[p["state"]] += 1
+        git = p.get("git", {})
+        if p["exists"]:
+            if git.get("dirty"):
+                summary["dirty"] += 1
+            if git.get("ahead"):
+                summary["ahead"] += 1
+            if git.get("behind"):
+                summary["behind"] += 1
+            if not p["has_venv"]:
+                summary["no_venv"] += 1
+            if not git.get("is_git"):
+                summary["not_git"] += 1
+    return {"ok": summary["missing"] == 0,
+            "projects": projects, "summary": summary}
+
+
 # ---------- GitHub（gh CLI） ----------
 def gh_available() -> tuple[bool, str]:
     if not shutil.which("gh"):

@@ -28,6 +28,7 @@ python -m pj_manager.cli pull NAME_OR_PATH --json
 python -m pj_manager.cli log NAME_OR_PATH [-n N] --json
 python -m pj_manager.cli init NAME_OR_PATH --json
 python -m pj_manager.cli doctor --json
+python -m pj_manager.cli check --json
 python -m pj_manager.cli config show --json
 python -m pj_manager.cli config set-root DIR --json
 ```
@@ -48,6 +49,15 @@ Contract:
   a check fails — warnings (e.g. gh not logged in, a registered folder
   gone) keep exit 0. Run it first when something looks off; the desktop
   UI runs it at startup and shows the result in the sidebar.
+- `check` reports the health of *every* registered project in one JSON
+  object: `{"ok", "projects", "summary"}`. Each project carries `state`
+  (`ok` / `attention` / `missing`), `has_venv`, the `git` numbers
+  (branch / dirty / ahead / behind / last_commit) and an `issues` list
+  of short tags (`dirty:2`, `ahead:1`, `behind:1`, `no-venv`, `not-git`,
+  `missing`). The overall `ok` is false only when a registered folder
+  is gone (exit code 1); dirty / ahead / behind / no-venv are
+  `attention`, not failure. Use it instead of looping `status` over
+  every project.
 
 ## State and safety
 

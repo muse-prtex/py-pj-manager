@@ -17,6 +17,7 @@ Examples:
   python -m pj_manager.cli status my-app --json
   python -m pj_manager.cli init my-app --json
   python -m pj_manager.cli doctor --json
+  python -m pj_manager.cli check --json
 """
 
 from __future__ import annotations
@@ -190,6 +191,32 @@ def cmd_init(args) -> int:
     return _out({"ok": True, "output": out}, args.json, out)
 
 
+def cmd_check(args) -> int:
+    result = core.check_all()
+    lines = []
+    for p in result["projects"]:
+        git = p.get("git", {})
+        if not p["exists"]:
+            git_s = "missing"
+        elif not git.get("is_git"):
+            git_s = "not-git"
+        else:
+            git_s = (f"{git.get('branch', '')} dirty={git.get('dirty', 0)} "
+                     f"ahead={git.get('ahead', 0)} "
+                     f"behind={git.get('behind', 0)}")
+        issues = f" ({', '.join(p['issues'])})" if p["issues"] else ""
+        lines.append(f"{p['name']:<24} [{p['state']}] "
+                     f"{'venv' if p['has_venv'] else 'no-venv'} "
+                     f"{git_s}{issues}")
+    s = result["summary"]
+    lines.append(f"check: {s['total']} projects "
+                 f"({s['ok']} ok / {s['attention']} attention / "
+                 f"{s['missing']} missing)")
+    _out(result, args.json,
+         "\n".join(lines) if lines else "(no projects registered)")
+    return 0 if result["ok"] else 1
+
+
 def cmd_doctor(args) -> int:
     result = core.doctor()
     marks = {"ok": "✓", "warn": "!", "fail": "✗"}
@@ -269,6 +296,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("doctor", help="check environment health "
                    "(python / git / gh / paths / registry)")
+
+    sub.add_parser("check", help="health of all registered projects "
+                   "(dirty / ahead / behind / venv) as one JSON")
     return p
 
 
@@ -285,6 +315,7 @@ HANDLERS = {
     "init": cmd_init,
     "config": cmd_config,
     "doctor": cmd_doctor,
+    "check": cmd_check,
 }
 
 
