@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.19.0 — 2026-11-16
+
+- `log` on a repository with no commits yet no longer fails. It used to
+  exit 1 with git's raw English output ("fatal: your current branch
+  'main' does not have any commits yet") — easy to hit, because `init`
+  creates a repository with no commits. An empty history is not a
+  failure, so `log` now succeeds (exit 0) with an empty list
+  (`{"ok": true, "log": []}` with `--json`) and a friendly localized
+  message ("まだコミットがありません" / "No commits yet"). The same
+  idea as committing a clean tree (v0.17.0): the desired end state is
+  already met. Detection is `core.has_commits()` via
+  `git rev-parse --verify HEAD`, so it depends on the exit code, not on
+  git's message text (which changes with locale). A real failure (a
+  corrupt repository, a non-git folder) still fails as before.
+- Real use: in the sandbox, registered and `init`-ed an empty project
+  and ran `log` in Japanese, in English and with `--json` — all exit 0
+  with the empty list / message; a committed project still lists its
+  history and `-n 1` still limits it (screenshot `session17-log.png`).
+- Tests: 8 new tests in `tests/test_log.py` (`has_commits` before /
+  after the first commit, CLI `log` on an empty repo in ja/en/JSON,
+  history still listed, `-n` limiting, non-git folder still fails).
+  124 tests total, all passing.
+- `day-run/tools/session17-log.sh` — the real-use demo for this
+  session (register + init an empty project, `log` it in ja/en/JSON,
+  then `log` a committed project with `-n 1`); run it through
+  `term_shot.py` to re-take the screenshot.
+- Note: the 7 screenshots in `docs/images/` still cannot be pushed with
+  the GitHub connector — `push_files` / `create_or_update_file` accept
+  UTF-8 text only. The images are in Box as `docs-images-v0.12.0.zip`
+  (`12_Muse/PJマネージャー`); adding them via the GitHub web UI to
+  `docs/images/` fixes the links in `docs/usage.md` and the READMEs.
+
 ## 0.18.0 — 2026-11-16
 
 - `status` on a registered project whose folder is gone (a "ghost") no

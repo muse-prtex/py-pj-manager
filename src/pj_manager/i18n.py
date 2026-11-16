@@ -402,6 +402,10 @@ STRINGS: dict[str, dict[str, str]] = {
         "ja": "git log failed",
         "en": "git log failed",
     },
+    "cli_log_empty": {
+        "ja": "まだコミットがありません",
+        "en": "No commits yet",
+    },
     "cli_init_failed": {
         "ja": "git init failed",
         "en": "git init failed",

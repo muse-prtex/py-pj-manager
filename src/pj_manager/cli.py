@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import sys
 from pathlib import Path
 
@@ -189,6 +190,13 @@ def cmd_log(args) -> int:
     err = _require_git_repo(path)
     if err:
         return _fail(err, args.json)
+    # コミットがまだ1件も無いリポジトリは、git log が終了コード 128 で
+    # "does not have any commits yet" を返す。履歴が空なのは失敗では
+    # ないので、空の一覧で成功として返す（変更なしコミットの成功扱いと
+    # 同じ考え方）。git が無い環境ではこの判定はできないので、従来の
+    # 経路へ落として git 側のエラーをそのまま出す。
+    if shutil.which("git") and not core.has_commits(path):
+        return _out({"ok": True, "log": []}, args.json, _t("cli_log_empty"))
     ok, out = core.git_op(
         path, "log", f"-{args.n}", "--pretty=%h %ad %s", "--date=short")
     if not ok:

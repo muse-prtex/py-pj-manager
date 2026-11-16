@@ -59,7 +59,10 @@ Contract:
   quick health check. `status` fails (exit 1, `{"ok": false, "error": ...}`)
   when the registered folder is gone — a missing folder is not "not a git
   repository". `list` marks such a row `[missing]` in human output; the
-  JSON still carries `exists: false`.
+  JSON still carries `exists: false`. `log` on a repository with no
+  commits yet succeeds with an empty list (`{"ok": true, "log": []}`) and
+  a localized "no commits yet" message instead of failing with git's raw
+  "does not have any commits yet" — an empty history is not a failure.
 - `doctor` checks the environment (Python / venv / git / gh / projects_root
   / data dir / registry / config) and returns `{"ok", "status", "checks",
   "summary"}`. `status` is `ok` / `warn` / `fail`; exit code is 1 only when

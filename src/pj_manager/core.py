@@ -292,6 +292,17 @@ def git_op(path: str | Path, *args: str) -> tuple[bool, str]:
     return run_cmd(["git", *args], cwd=Path(path))
 
 
+def has_commits(path: str | Path) -> bool:
+    """HEAD が指すコミットがあるか。まだ1件も無い空のリポジトリは False。
+
+    判定は `git rev-parse --verify HEAD` の終了コードだけで行い、
+    git の文言（ロケールで変わる）には依存しない。
+    """
+    ok, _out = run_cmd(["git", "rev-parse", "--verify", "HEAD"],
+                       cwd=Path(path))
+    return ok
+
+
 def commit_all(path: str | Path, message: str) -> tuple[bool, str]:
     """git add -A && git commit -m message。
 
