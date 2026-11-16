@@ -140,6 +140,24 @@ STRINGS: dict[str, dict[str, str]] = {
         "ja": "同じ名前のフォルダがすでにあります: {path}",
         "en": "A folder with the same name already exists: {path}",
     },
+    "file_exists": {
+        "ja": "同じ名前のファイルがすでにあります: {path}（フォルダを作れない"
+              "ので、ファイルを移動するか別の名前にしてください）",
+        "en": "A file with the same name already exists: {path} (a folder "
+              "cannot be created there; move the file or pick another name)",
+    },
+    "root_not_a_folder": {
+        "ja": "作成先がフォルダではありません: {path}（ファイルが存在します。"
+              "別の場所を指定してください）",
+        "en": "The destination is not a folder: {path} (a file exists "
+              "there. Pick another location)",
+    },
+    "root_parent_is_file": {
+        "ja": "作成先の途中にファイルがあります: {path}（フォルダではないため"
+              "作成できません。別の場所を指定してください）",
+        "en": "A file blocks the destination path: {path} (part of the "
+              "path is a file, not a folder. Pick another location)",
+    },
     "log_folder_created": {
         "ja": "フォルダを作成: {path}",
         "en": "Created folder: {path}",

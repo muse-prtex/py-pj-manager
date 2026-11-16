@@ -87,6 +87,18 @@ Contract:
   returning git's raw "fatal: unrecognized argument: --1". The check
   runs in `cli.cmd_log` before git and before the empty-repo success
   path. A positive count still lists that many commits.
+- `create` fails (exit 1) with a friendly, localized message when the
+  destination cannot hold a folder: `--root` pointing at a file
+  ("作成先がフォルダではありません: …" / "The destination is not a
+  folder: …"), an element of the `--root` path being a file
+  ("作成先の途中にファイルがあります: …" / "A file blocks the
+  destination path: …"), or the target name already existing as a
+  file ("同じ名前のファイルがすでにあります: …" / "A file with the
+  same name already exists: …") — instead of Python's raw
+  `FileExistsError: [Errno 17]` / `NotADirectoryError: [Errno 20]`,
+  or the misleading "same folder already exists" for a file. The
+  check runs in `core.create_project` before anything is created, so
+  a failed attempt leaves no folder and no registry entry.
 - `push` / `pull` with no remote or no upstream branch configured still
   fail (exit 1) — the desired end state is not met — but with a
   friendly, localized message that says what to do next

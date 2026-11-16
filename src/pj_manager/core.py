@@ -679,10 +679,22 @@ def create_project(name: str, root: str | Path, template: str = "python",
         raise ValueError(_t("duplicate_name_create",
                             name=name, path=existing["path"]))
     root = Path(root).expanduser()
-    root.mkdir(parents=True, exist_ok=True)
+    # --root がファイルそのもの、または途中の要素がファイルだと
+    # root.mkdir() が FileExistsError / NotADirectoryError という
+    # Python の生の例外で失敗する。呼び出し側の指定ミスなので、
+    # git に渡す前に日英の親切な文言で失敗させる（log -n の不正な
+    # 件数や空のコミットメッセージと同じ考え方）。
+    if root.exists() and not root.is_dir():
+        raise ValueError(_t("root_not_a_folder", path=root))
+    try:
+        root.mkdir(parents=True, exist_ok=True)
+    except NotADirectoryError:
+        raise ValueError(_t("root_parent_is_file", path=root))
     path = root / name
     if path.exists():
-        raise ValueError(_t("folder_exists", path=path))
+        if path.is_dir():
+            raise ValueError(_t("folder_exists", path=path))
+        raise ValueError(_t("file_exists", path=path))
 
     path.mkdir(parents=True)
     log(_t("log_folder_created", path=path))

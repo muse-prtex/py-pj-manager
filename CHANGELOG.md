@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.24.0 — 2026-11-17
+
+- `create` with a `--root` that is a file, or whose path is blocked
+  by a file, now fails with a friendly, localized message instead of
+  Python's raw exception — \"作成先がフォルダではありません: …（ファイ
+  ルが存在します。別の場所を指定してください）\" / \"The destination
+  is not a folder: … (a file exists there. Pick another location)\"
+  for a root that is a file, and \"作成先の途中にファイルがあります:
+  …\" / \"A file blocks the destination path: …\" when an element of
+  the path is a file (`FileExistsError: [Errno 17]` /
+  `NotADirectoryError: [Errno 20]` before). A target name that
+  already exists as a file is now reported as a file, not a folder
+  (\"同じ名前のファイルがすでにあります: …\" / \"A file with the same
+  name already exists: …\"). The failure stays a failure (exit 1):
+  the destination is a caller error. The check runs in
+  `core.create_project` before anything is created, so a failed
+  attempt leaves no folder and no registry entry. The same idea as
+  the empty commit message (v0.22.0) and the invalid `log -n` count
+  (v0.23.0).
+- Real use: in the sandbox, ran `create` with `--root` pointing at a
+  file, at a path blocked by a file, and at a root where the target
+  name is a file (Japanese, English, `--json`) — all exit 1 with the
+  friendly message and no \"FileExistsError\" / \"Errno\"; a create
+  with a good root still succeeds afterwards (screenshot
+  `session22-create-root.png`).
+- Tests: 9 new tests in `tests/test_create_root.py` (core: root is a
+  file / parent is a file / target is a file, English, and a later
+  good create; CLI: ja/en/JSON and exit codes).
+
 ## 0.23.0 — 2026-11-16
 
 - `log -n` with a count of 0 or a negative number now fails with a
