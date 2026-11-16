@@ -6,7 +6,9 @@ git & GitHub). There are three faces over one core:
 - **Desktop UI** (`desktop/`, Tauri) — the modern face for humans. It holds
   no logic; it spawns the CLI (below) and renders the JSON.
 - **GUI** (`src/pj_manager/app.py`, tkinter) — the zero-dependency fallback
-  face for humans. Do not try to automate either GUI.
+  face for humans. Do not try to automate either GUI. Keyboard shortcuts:
+  `Ctrl+N` new, `Ctrl+O` register, `F5` / `Ctrl+R` refresh, `Enter` open
+  the selected project in a terminal, `Delete` unregister, `Ctrl+Q` quit.
 - **CLI** (`src/pj_manager/cli.py`) — for scripts and AI agents. Use this.
 
 ## The CLI

@@ -40,6 +40,20 @@ LOG_FG = "#c9d4e3"
 UI_FONT = "Yu Gothic UI" if IS_WINDOWS else ""
 MONO_FONT = "Consolas" if IS_WINDOWS else "DejaVu Sans Mono"
 
+# キーボードショートカット: (キー, 対象, ハンドラ名)
+# 対象 "root" はメインウィンドウ全体、"list" はプロジェクト一覧のみ。
+# 一覧専用のキー（Enter / Delete）は一覧にフォーカスがあるときだけ効く
+# （入力欄で Delete を押して登録解除ダイアログが出るのを防ぐため）。
+SHORTCUTS = (
+    ("<Control-n>", "root", "dialog_new"),
+    ("<Control-o>", "root", "dialog_register"),
+    ("<F5>", "root", "refresh_all"),
+    ("<Control-r>", "root", "refresh_all"),
+    ("<Control-q>", "root", "quit_app"),
+    ("<Return>", "list", "do_open_terminal"),
+    ("<Delete>", "list", "do_unregister"),
+)
+
 
 def font(size: int, weight: str = "") -> tuple:
     return (UI_FONT, size, weight) if weight else (UI_FONT, size)
@@ -202,6 +216,9 @@ class App(tk.Tk):
                                  "ja" if self.lang_combo.get() == "日本語" else "en"))
         from pj_manager import __version__
         ttk.Label(side, text=f"v{__version__}", style="SideSub.TLabel").pack(
+            anchor="w", padx=16, pady=(0, 6))
+        ttk.Label(side, text=self.tr("app_shortcuts_hint"),
+                  style="SideSub.TLabel", wraplength=260, justify="left").pack(
             anchor="w", padx=16, pady=(0, 10))
 
         # 右メインエリア
@@ -249,6 +266,28 @@ class App(tk.Tk):
                               highlightthickness=0, font=(MONO_FONT, 9),
                               padx=10, pady=8)
         self.logbox.pack(fill="both", expand=True)
+        self._bind_shortcuts()
+
+    def _bind_shortcuts(self) -> None:
+        """キーボードショートカットを結び直す（_build のたびに呼ぶ）。
+
+        bind は同じキーへの再登録で上書きされるので、言語切替の作り直しで
+        二重に呼ばれることはない。ハンドラは event を受け取らないので
+        lambda で包んで渡す。
+        """
+        for key, scope, handler_name in SHORTCUTS:
+            handler = getattr(self, handler_name)
+            widget = self if scope == "root" else self.listbox
+            widget.bind(key, lambda _e, h=handler: h())
+
+    def refresh_all(self) -> None:
+        """一覧と詳細を更新する（F5 / Ctrl+R 用）。"""
+        self.refresh_list()
+        self.show_detail()
+
+    def quit_app(self) -> None:
+        """アプリを終了する（Ctrl+Q 用）。"""
+        self.destroy()
 
     # ---------- 補助 ----------
     def log(self, text: str) -> None:

@@ -464,6 +464,10 @@ STRINGS: dict[str, dict[str, str]] = {
         "ja": "言語",
         "en": "Language",
     },
+    "app_shortcuts_hint": {
+        "ja": "ショートカット: Ctrl+N 新規作成 / Ctrl+O 登録 / F5・Ctrl+R 更新 / Enter ターミナル / Del 登録解除 / Ctrl+Q 終了",
+        "en": "Shortcuts: Ctrl+N New / Ctrl+O Register / F5, Ctrl+R Refresh / Enter Terminal / Del Unregister / Ctrl+Q Quit",
+    },
     "app_detail_placeholder": {
         "ja": "左の一覧からプロジェクトを選んでください",
         "en": "Select a project from the list",

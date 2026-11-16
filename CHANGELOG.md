@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.13.0 — 2026-11-16
+
+- Keyboard shortcuts in the tkinter GUI (reserve-improvement slot):
+  `Ctrl+N` new project, `Ctrl+O` register an existing folder, `F5` /
+  `Ctrl+R` refresh the list and detail, `Enter` open the selected
+  project in a venv-activated terminal, `Delete` unregister the selected
+  project, `Ctrl+Q` quit. The shortcuts are listed in a hint line at
+  the bottom-left of the sidebar (Japanese / English, follows the
+  language setting). List-only keys (`Enter` / `Delete`) are bound to
+  the project list itself, so pressing `Delete` while typing in a field
+  cannot trigger an unregister dialog. Bindings are re-applied on every
+  rebuild (language switch destroys and recreates the widgets).
+- Real use: opened the GUI on Xvfb with the sandbox registry and
+  pressed `Ctrl+N` — the new-project dialog actually opened
+  (screenshot `session11-shortcut-new.png`). `F5` / `Ctrl+R` use the
+  same binding path (`_bind_shortcuts`, covered by tests). Screenshots
+  in `docs/images/` are unchanged (the GUI layout is the same apart
+  from the hint line).
+- Tests: 9 new tests in `tests/test_shortcuts.py` (shortcut table,
+  handler existence, no duplicate key per scope, hint in both
+  languages naming every shortcut, `_build` rebinds). 85 tests total,
+  all passing.
+- Note: the 7 screenshots in `docs/images/` still cannot be pushed
+  with the GitHub connector — `push_files` / `create_or_update_file`
+  accept UTF-8 text only (the server base64-encodes the string it is
+  given, so binary content has no route through it; confirmed against
+  the live tool catalogue this session). Session 11 also tried the
+  GitHub web UI, but the browser has no saved GitHub login and no
+  login flow is started, so the upload was blocked at sign-in. The
+  images are handed to the user as a ready-to-upload ZIP via Box
+  (`12_Muse/PJマネージャー/docs-images-v0.12.0.zip`) instead — drag
+  the 7 PNGs into `docs/images/` on the GitHub web UI and the links
+  in `docs/usage.md` and the READMEs will resolve.
+
 ## 0.12.0 — 2026-11-16
 
 - Documentation: new `docs/usage.md` — a full usage guide with real

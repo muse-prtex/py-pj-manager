@@ -25,6 +25,9 @@ No dependencies beyond the Python standard library — clone it, double-click
   or in Explorer.
 - **Git built in** — refresh status, commit (with a message field), push, pull,
   view the log, `git init`.
+- **Keyboard shortcuts** — `Ctrl+N` new project, `Ctrl+O` register a folder,
+  `F5` / `Ctrl+R` refresh, `Enter` open the selected project in a terminal,
+  `Delete` unregister, `Ctrl+Q` quit (listed at the bottom-left of the GUI).
 - **GitHub via `gh`** — create a repository or open it in the browser, using the
   official GitHub CLI.
 
