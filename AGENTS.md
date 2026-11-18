@@ -114,7 +114,11 @@ Contract:
   `{"ok", "status", "checks", "summary"}`. The `git_identity` check
   looks at the *global* user.name / user.email and warns when they
   are not set (per-repository identity still works for commits, and
-  the hint says so). `status` is `ok` / `warn` / `fail`; exit code is 1 only when
+  the hint says so). A `projects_root` that exists as a file (not a
+  folder) is a `fail` with a hint to pick another folder via
+  `config set-root` — a folder can never be created where a file
+  sits, and `create` fails there too (v0.24.0); a root that does not
+  exist yet with a writable parent is still `ok` ("will be created"). `status` is `ok` / `warn` / `fail`; exit code is 1 only when
   a check fails — warnings (e.g. gh not logged in, a registered folder
   gone) keep exit 0. Run it first when something looks off; the desktop
   UI runs it at startup and shows the result in the sidebar.

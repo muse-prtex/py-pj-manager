@@ -8,6 +8,28 @@
 > `docs/images/` へドラッグ＆ドロップすれば usage.md と README の画像リンクが直る）。
 > 週1回の改善（水曜）は `py-pj-manager-weekly-improvement` で継続。
 
+## 0.25.0 — 2026-11-18
+
+- `doctor` now reports `projects_root` as `fail` (exit 1) when the
+  configured root exists as a file instead of a folder — \"フォルダでは
+  なくファイルです: …\" / \"Not a folder — a file exists there: …\"
+  with a hint to pick another folder via `config set-root`. Before,
+  `doctor` said the root was \"ok (it will be created on first use)\"
+  even though `create` fails against that path (v0.24.0 made `create
+  --root` fail with a friendly message when the root is a file), so
+  the two commands contradicted each other. A root that does not
+  exist yet (with a writable parent) is still reported as ok.
+- Real use: in the sandbox, set `projects_root` to an existing file
+  and ran `doctor` (Japanese, English, `--json`) — `projects_root`
+  is `fail` with the hint, exit 1; setting the root back to a folder
+  returns `doctor` to ok. The weekly e2e (create with venv + git +
+  initial commit, status/commit/log, push/pull against a local bare
+  remote, register/unregister with the folder surviving, config
+  save/load) all passed.
+- Tests: 4 new tests in `tests/test_doctor.py` (core: file root fails
+  in ja/en with the hint, missing-but-creatable root stays ok; CLI:
+  `doctor --json` exits 1 with `projects_root` fail).
+
 ## 0.24.0 — 2026-11-17
 
 - `create` with a `--root` that is a file, or whose path is blocked

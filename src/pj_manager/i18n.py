@@ -311,6 +311,16 @@ STRINGS: dict[str, dict[str, str]] = {
         "ja": "まだありません（初回作成時に作られます）: {path}",
         "en": "Not created yet (it will be created on first use): {path}",
     },
+    "doctor_root_is_file": {
+        "ja": "フォルダではなくファイルです: {path}",
+        "en": "Not a folder — a file exists there: {path}",
+    },
+    "doctor_root_is_file_hint": {
+        "ja": "config set-root で別のフォルダを指定してください"
+              "（ファイルの場所にはプロジェクトを作れません）",
+        "en": "Use `config set-root` to point at another folder "
+              "(projects cannot be created where a file exists)",
+    },
     "doctor_root_fail": {
         "ja": "作れません: {path}",
         "en": "Cannot be created: {path}",

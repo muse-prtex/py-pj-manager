@@ -588,7 +588,14 @@ def doctor() -> dict:
     # projects_root
     cfg = load_config()
     root = Path(cfg.get("projects_root", "")).expanduser()
-    if root.is_dir():
+    if root.exists() and not root.is_dir():
+        # ファイルが置いてある場所にはフォルダを作れない。create は
+        # 親切な文言で失敗する（v0.24.0）のに、doctor が「初回作成時に
+        # 作られます」と ok を出すのは矛盾するので、ここでは fail にする。
+        add("projects_root", "fail",
+            _t("doctor_root_is_file", path=root),
+            _t("doctor_root_is_file_hint"))
+    elif root.is_dir():
         add("projects_root", "ok", _t("doctor_root_ok", path=root))
     elif root.parent.is_dir() and os.access(root.parent, os.W_OK):
         add("projects_root", "ok",
